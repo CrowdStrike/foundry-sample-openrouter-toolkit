@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "properties": {
+    "user_prompt_input": {
+      "type": "string",
+      "description": "The query to analyze"
+    },
+    "model_name_input": {
+      "type": "string",
+      "description": "The AI model to use for completion",
+      "default": "openrouter/auto"
+    },
+    "temperature_input": {
+      "type": "number",
+      "description": "Controls randomness in the output (0.0-1.0)",
+      "default": "0.4"
+    },
+    "online_input": {
+      "type": "boolean",
+      "description": "Enable web search for current information",
+      "default": false
+    },
+    "provider_sort_input": {
+      "type": "string",
+      "description": "Provider sorting preference for OpenRouter",
+      "enum": ["price", "throughput", "latency"],
+      "default": null
+    }
+  },
+  "required": ["user_prompt_input", "model_name_input"],
+  "additionalProperties": false
+}

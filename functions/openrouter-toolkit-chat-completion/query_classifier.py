@@ -1,0 +1,535 @@
+"""
+Query classifier for determining analysis approach based on query content and context entities.
+Supports intelligent classification for context-aware prompt generation.
+"""
+
+from typing import Dict, List
+from dataclasses import dataclass
+from enum import Enum
+
+from constants import (
+    COMPILED_PATTERNS,
+    MIN_ENTITIES_FOR_SPECIALIZED_ANALYSIS,
+)
+from context_analyzer import OSINTEntities
+
+
+class QueryType(Enum):
+    """Enumeration of supported query analysis types."""
+
+    HASH_ANALYSIS = "hash_analysis"
+    DOMAIN_REPUTATION = "domain_reputation"
+    MITRE_TECHNIQUE = "mitre_technique"
+    INCIDENT_OVERVIEW = "incident_overview"
+    MIXED_ANALYSIS = "mixed_analysis"
+    GENERAL_SECURITY = "general_security"
+
+
+class ComplexityLevel(Enum):
+    """Query complexity levels for response formatting."""
+
+    LOW = "low"  # Single entity, straightforward analysis
+    MEDIUM = "medium"  # Multiple entities of same type
+    HIGH = "high"  # Mixed entity types, complex correlation
+
+
+@dataclass
+class QueryClassification:
+    """Result of query analysis with classification details."""
+
+    # Primary classification
+    primary_type: QueryType
+    secondary_types: List[QueryType]
+
+    # Entity analysis
+    entity_focus: Dict[str, bool]
+    available_entities: Dict[str, int]
+
+    # Response guidance
+    complexity: ComplexityLevel
+    response_format: str
+    confidence: float
+
+    # Analysis metadata
+    query_indicators: Dict[str, bool]
+    context_indicators: Dict[str, bool]
+    specialized_analysis: bool
+
+
+class QueryClassifier:
+    """Analyze queries and context to determine optimal analysis approach."""
+
+    def __init__(self):
+        self.logger = None
+
+    def classify_query(
+        self, user_query: str, entities: OSINTEntities, logger=None
+    ) -> QueryClassification:
+        """
+        Classify a user query based on content and available context entities.
+
+        Args:
+            user_query: The user's query text
+            entities: Extracted OSINT entities from context
+            logger: Optional logger instance
+
+        Returns:
+            QueryClassification with analysis approach details
+        """
+        self.logger = logger
+
+        # Analyze query text for indicators
+        query_indicators = self._analyze_query_text(user_query)
+
+        # Analyze available context entities
+        context_indicators = self._analyze_context_entities(entities)
+
+        # Determine primary analysis type
+        primary_type = self._determine_primary_type(
+            query_indicators, context_indicators, entities
+        )
+
+        # Identify secondary analysis types
+        secondary_types = self._identify_secondary_types(
+            primary_type, context_indicators
+        )
+
+        # Assess complexity
+        complexity = self._assess_complexity(entities, primary_type, secondary_types)
+
+        # Determine response format
+        response_format = self._determine_response_format(primary_type, complexity)
+
+        # Calculate confidence score
+        confidence = self._calculate_confidence(
+            query_indicators, context_indicators, entities
+        )
+
+        # Create classification result
+        classification = QueryClassification(
+            primary_type=primary_type,
+            secondary_types=secondary_types,
+            entity_focus=context_indicators,
+            available_entities=self._count_available_entities(entities),
+            complexity=complexity,
+            response_format=response_format,
+            confidence=confidence,
+            query_indicators=query_indicators,
+            context_indicators=context_indicators,
+            specialized_analysis=self._requires_specialized_analysis(
+                primary_type, entities
+            ),
+        )
+
+        # Log classification results
+        if self.logger:
+            self._log_classification_results(classification, user_query)
+
+        return classification
+
+    def _analyze_query_text(self, query: str) -> Dict[str, bool]:
+        """Analyze query text for analysis type indicators."""
+
+        query_lower = query.lower()
+
+        indicators = {
+            "mentions_hash": False,
+            "mentions_domain": False,
+            "mentions_mitre": False,
+            "mentions_ip": False,
+            "requests_overview": False,
+            "requests_analysis": False,
+            "mentions_malware": False,
+            "mentions_campaign": False,
+            "requests_reputation": False,
+            "requests_correlation": False,
+        }
+
+        # Check for hash mentions
+        hash_patterns = [
+            COMPILED_PATTERNS["md5_hash"],
+            COMPILED_PATTERNS["sha256_hash"],
+            COMPILED_PATTERNS["sha1_hash"],
+        ]
+
+        for pattern in hash_patterns:
+            if pattern.search(query):
+                indicators["mentions_hash"] = True
+                break
+
+        # Check for hash-related keywords
+        if not indicators["mentions_hash"]:
+            hash_keywords = ["hash", "md5", "sha256", "sha1", "checksum", "signature"]
+            indicators["mentions_hash"] = any(
+                keyword in query_lower for keyword in hash_keywords
+            )
+
+        # Check for domain mentions
+        if COMPILED_PATTERNS["domain"].search(query) or "@" in query:
+            indicators["mentions_domain"] = True
+        else:
+            domain_keywords = ["domain", "website", "url", "dns", "phishing"]
+            indicators["mentions_domain"] = any(
+                keyword in query_lower for keyword in domain_keywords
+            )
+
+        # Check for IP mentions
+        if COMPILED_PATTERNS["ipv4"].search(query):
+            indicators["mentions_ip"] = True
+        else:
+            ip_keywords = ["ip", "address", "network"]
+            indicators["mentions_ip"] = any(
+                keyword in query_lower for keyword in ip_keywords
+            )
+
+        # Check for MITRE mentions
+        if COMPILED_PATTERNS["mitre_technique"].search(query):
+            indicators["mentions_mitre"] = True
+        else:
+            mitre_keywords = ["mitre", "att&ck", "technique", "tactic", "ttp"]
+            indicators["mentions_mitre"] = any(
+                keyword in query_lower for keyword in mitre_keywords
+            )
+
+        # Check for overview/summary requests
+        overview_keywords = [
+            "overview",
+            "summary",
+            "incident",
+            "what happened",
+            "explain",
+        ]
+        indicators["requests_overview"] = any(
+            keyword in query_lower for keyword in overview_keywords
+        )
+
+        # Check for analysis requests
+        analysis_keywords = ["analyze", "analysis", "investigate", "examine", "assess"]
+        indicators["requests_analysis"] = any(
+            keyword in query_lower for keyword in analysis_keywords
+        )
+
+        # Check for malware mentions
+        malware_keywords = ["malware", "virus", "trojan", "ransomware", "backdoor"]
+        indicators["mentions_malware"] = any(
+            keyword in query_lower for keyword in malware_keywords
+        )
+
+        # Check for campaign mentions
+        campaign_keywords = ["campaign", "attribution", "threat actor", "apt"]
+        indicators["mentions_campaign"] = any(
+            keyword in query_lower for keyword in campaign_keywords
+        )
+
+        # Check for reputation requests
+        reputation_keywords = [
+            "reputation",
+            "safe",
+            "malicious",
+            "blacklist",
+            "whitelist",
+        ]
+        indicators["requests_reputation"] = any(
+            keyword in query_lower for keyword in reputation_keywords
+        )
+
+        # Check for correlation requests
+        correlation_keywords = ["correlate", "relate", "connect", "link", "associated"]
+        indicators["requests_correlation"] = any(
+            keyword in query_lower for keyword in correlation_keywords
+        )
+
+        return indicators
+
+    def _analyze_context_entities(self, entities: OSINTEntities) -> Dict[str, bool]:
+        """Analyze available context entities to determine focus areas."""
+
+        return {
+            "has_hashes": any(
+                len(hashes) > 0 for hashes in entities.file_hashes.values()
+            ),
+            "has_domains": len(entities.email_domains) > 0,
+            "has_public_ips": len(entities.public_ips) > 0,
+            "has_mitre": len(entities.mitre_techniques) > 0
+            or len(entities.mitre_tactics) > 0,
+            "has_suspicious_files": len(entities.suspicious_files) > 0,
+            "has_multiple_types": self._count_entity_types(entities) > 1,
+            "has_high_confidence": entities.confidence_score > 0.7,
+            "has_rich_context": entities.entity_counts.get("total_entities", 0) > 3,
+        }
+
+    def _determine_primary_type(
+        self,
+        query_indicators: Dict[str, bool],
+        context_indicators: Dict[str, bool],
+        entities: OSINTEntities,
+    ) -> QueryType:
+        """Determine the primary analysis type based on query and context."""
+
+        # Priority order: Direct mentions > Context availability > General analysis
+
+        # 1. Check for direct entity mentions in query
+        if query_indicators["mentions_hash"] and context_indicators["has_hashes"]:
+            return QueryType.HASH_ANALYSIS
+
+        if query_indicators["mentions_domain"] and context_indicators["has_domains"]:
+            return QueryType.DOMAIN_REPUTATION
+
+        if query_indicators["mentions_mitre"] and context_indicators["has_mitre"]:
+            return QueryType.MITRE_TECHNIQUE
+
+        # 2. Check for overview/correlation requests with rich context
+        if (
+            query_indicators["requests_overview"]
+            or query_indicators["requests_correlation"]
+        ) and context_indicators["has_rich_context"]:
+            return QueryType.INCIDENT_OVERVIEW
+
+        # 3. Determine based on strongest available context
+        if (
+            context_indicators["has_multiple_types"]
+            and context_indicators["has_rich_context"]
+        ):
+            return QueryType.MIXED_ANALYSIS
+
+        # 4. Single entity type analysis
+        if (
+            context_indicators["has_hashes"]
+            and entities.entity_counts.get("total_hashes", 0)
+            >= MIN_ENTITIES_FOR_SPECIALIZED_ANALYSIS["hash_analysis"]
+        ):
+            return QueryType.HASH_ANALYSIS
+
+        if (
+            context_indicators["has_domains"]
+            and len(entities.email_domains)
+            >= MIN_ENTITIES_FOR_SPECIALIZED_ANALYSIS["domain_analysis"]
+        ):
+            return QueryType.DOMAIN_REPUTATION
+
+        if (
+            context_indicators["has_mitre"]
+            and (len(entities.mitre_techniques) + len(entities.mitre_tactics))
+            >= MIN_ENTITIES_FOR_SPECIALIZED_ANALYSIS["mitre_analysis"]
+        ):
+            return QueryType.MITRE_TECHNIQUE
+
+        # 5. Default to general security analysis
+        return QueryType.GENERAL_SECURITY
+
+    def _identify_secondary_types(
+        self, primary_type: QueryType, context_indicators: Dict[str, bool]
+    ) -> List[QueryType]:
+        """Identify secondary analysis types that should be included."""
+
+        secondary_types = []
+
+        # Don't add secondary types for general security queries
+        if primary_type == QueryType.GENERAL_SECURITY:
+            return secondary_types
+
+        # Add complementary analysis types based on available context
+        if primary_type != QueryType.HASH_ANALYSIS and context_indicators["has_hashes"]:
+            secondary_types.append(QueryType.HASH_ANALYSIS)
+
+        if (
+            primary_type != QueryType.DOMAIN_REPUTATION
+            and context_indicators["has_domains"]
+        ):
+            secondary_types.append(QueryType.DOMAIN_REPUTATION)
+
+        if (
+            primary_type != QueryType.MITRE_TECHNIQUE
+            and context_indicators["has_mitre"]
+        ):
+            secondary_types.append(QueryType.MITRE_TECHNIQUE)
+
+        # Limit to most relevant secondary types
+        return secondary_types[:2]
+
+    def _assess_complexity(
+        self,
+        entities: OSINTEntities,
+        primary_type: QueryType,
+        secondary_types: List[QueryType],
+    ) -> ComplexityLevel:
+        """Assess the complexity level of the analysis required."""
+
+        total_entities = entities.entity_counts.get("total_entities", 0)
+        entity_types = self._count_entity_types(entities)
+
+        # High complexity: Multiple entity types or many entities
+        if entity_types >= 3 or total_entities >= 8 or len(secondary_types) >= 2:
+            return ComplexityLevel.HIGH
+
+        # Medium complexity: Multiple entities of same type or some variety
+        if entity_types == 2 or total_entities >= 4 or len(secondary_types) == 1:
+            return ComplexityLevel.MEDIUM
+
+        # Low complexity: Single entity type with few entities
+        return ComplexityLevel.LOW
+
+    def _determine_response_format(
+        self, primary_type: QueryType, complexity: ComplexityLevel
+    ) -> str:
+        """Determine the appropriate response format based on analysis type and complexity."""
+
+        if primary_type == QueryType.HASH_ANALYSIS:
+            return "hash_focused"
+        elif primary_type == QueryType.DOMAIN_REPUTATION:
+            return "domain_focused"
+        elif primary_type == QueryType.MITRE_TECHNIQUE:
+            return "mitre_focused"
+        elif primary_type in [QueryType.INCIDENT_OVERVIEW, QueryType.MIXED_ANALYSIS]:
+            return "mixed_analysis"
+        else:
+            return "general_analysis"
+
+    def _calculate_confidence(
+        self,
+        query_indicators: Dict[str, bool],
+        context_indicators: Dict[str, bool],
+        entities: OSINTEntities,
+    ) -> float:
+        """Calculate confidence score for the classification."""
+
+        confidence = 0.0
+
+        # Query-context alignment (40%)
+        alignment_score = 0.0
+        alignment_checks = 0
+
+        if query_indicators["mentions_hash"]:
+            alignment_checks += 1
+            if context_indicators["has_hashes"]:
+                alignment_score += 1
+
+        if query_indicators["mentions_domain"]:
+            alignment_checks += 1
+            if context_indicators["has_domains"]:
+                alignment_score += 1
+
+        if query_indicators["mentions_mitre"]:
+            alignment_checks += 1
+            if context_indicators["has_mitre"]:
+                alignment_score += 1
+
+        if alignment_checks > 0:
+            confidence += (alignment_score / alignment_checks) * 0.4
+        else:
+            confidence += 0.2  # Base confidence when no specific mentions
+
+        # Context richness (30%)
+        context_score = min(entities.entity_counts.get("total_entities", 0) / 10.0, 1.0)
+        confidence += context_score * 0.3
+
+        # Entity confidence from analyzer (30%)
+        confidence += entities.confidence_score * 0.3
+
+        return min(confidence, 1.0)
+
+    def _count_entity_types(self, entities: OSINTEntities) -> int:
+        """Count the number of different entity types available."""
+
+        types = 0
+
+        if any(len(hashes) > 0 for hashes in entities.file_hashes.values()):
+            types += 1
+        if len(entities.email_domains) > 0:
+            types += 1
+        if len(entities.public_ips) > 0:
+            types += 1
+        if len(entities.mitre_techniques) > 0 or len(entities.mitre_tactics) > 0:
+            types += 1
+        if len(entities.suspicious_files) > 0:
+            types += 1
+
+        return types
+
+    def _count_available_entities(self, entities: OSINTEntities) -> Dict[str, int]:
+        """Count available entities by type for classification metadata."""
+
+        return {
+            "hashes": sum(len(hashes) for hashes in entities.file_hashes.values()),
+            "domains": len(entities.email_domains),
+            "ips": len(entities.public_ips),
+            "mitre_techniques": len(entities.mitre_techniques),
+            "mitre_tactics": len(entities.mitre_tactics),
+            "suspicious_files": len(entities.suspicious_files),
+        }
+
+    def _requires_specialized_analysis(
+        self, primary_type: QueryType, entities: OSINTEntities
+    ) -> bool:
+        """Determine if specialized analysis prompting is required."""
+
+        if primary_type == QueryType.GENERAL_SECURITY:
+            return False
+
+        # Check if we have enough entities for specialized analysis
+        if primary_type == QueryType.HASH_ANALYSIS:
+            return (
+                sum(len(hashes) for hashes in entities.file_hashes.values())
+                >= MIN_ENTITIES_FOR_SPECIALIZED_ANALYSIS["hash_analysis"]
+            )
+
+        if primary_type == QueryType.DOMAIN_REPUTATION:
+            return (
+                len(entities.email_domains)
+                >= MIN_ENTITIES_FOR_SPECIALIZED_ANALYSIS["domain_analysis"]
+            )
+
+        if primary_type == QueryType.MITRE_TECHNIQUE:
+            return (
+                len(entities.mitre_techniques) + len(entities.mitre_tactics)
+            ) >= MIN_ENTITIES_FOR_SPECIALIZED_ANALYSIS["mitre_analysis"]
+
+        if primary_type in [QueryType.MIXED_ANALYSIS, QueryType.INCIDENT_OVERVIEW]:
+            return (
+                entities.entity_counts.get("total_entities", 0)
+                >= MIN_ENTITIES_FOR_SPECIALIZED_ANALYSIS["mixed_analysis"]
+            )
+
+        return True
+
+    def _log_classification_results(
+        self, classification: QueryClassification, query: str
+    ) -> None:
+        """Log classification results for debugging."""
+
+        if not self.logger:
+            return
+
+        self.logger.debug("Query classification completed:")
+        self.logger.debug(
+            f"  - Query: {query[:100]}{'...' if len(query) > 100 else ''}"
+        )
+        self.logger.debug(f"  - Primary type: {classification.primary_type.value}")
+        self.logger.debug(
+            f"  - Secondary types: {[t.value for t in classification.secondary_types]}"
+        )
+        self.logger.debug(f"  - Complexity: {classification.complexity.value}")
+        self.logger.debug(f"  - Response format: {classification.response_format}")
+        self.logger.debug(f"  - Confidence: {classification.confidence:.2f}")
+        self.logger.debug(
+            f"  - Available entities: {classification.available_entities}"
+        )
+        self.logger.debug(
+            f"  - Specialized analysis: {classification.specialized_analysis}"
+        )
+
+
+def quick_classify_query(query: str, entities: OSINTEntities) -> str:
+    """
+    Quick classification function for simple use cases.
+
+    Args:
+        query: User query text
+        entities: OSINT entities from context
+
+    Returns:
+        String representation of primary query type
+    """
+    classifier = QueryClassifier()
+    classification = classifier.classify_query(query, entities)
+    return classification.primary_type.value

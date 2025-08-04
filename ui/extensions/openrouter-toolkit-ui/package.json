@@ -1,0 +1,81 @@
+{
+  "name": "openrouter-toolkit-ui",
+  "version": "1.0.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@crowdstrike/falcon-shoelace": "^0.4.0",
+    "@crowdstrike/foundry-js": "^0.18.0",
+    "@shoelace-style/shoelace": "^2.20.1",
+    "@tailwindcss/postcss": "^4.1.11",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.27.7",
+    "@babel/preset-react": "^7.27.1",
+    "@babel/preset-typescript": "^7.27.1",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-image": "^3.0.3",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@web/rollup-plugin-html": "^2.3.0",
+    "autoprefixer": "^10.4.21",
+    "cross-env": "^7.0.3",
+    "cssnano": "^7.0.7",
+    "cssnano-preset-advanced": "^7.0.7",
+    "fs-extra": "^11.3.0",
+    "npm-run-all": "^4.1.5",
+    "postcss": "^8.4.49",
+    "postcss-purgecss": "^5.0.0",
+    "rollup": "^4.44.1",
+    "rollup-plugin-brotli": "^3.1.0",
+    "rollup-plugin-gzip": "^4.1.1",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-visualizer": "^6.0.3",
+    "tailwindcss": "^4.1.11",
+    "terser": "^5.43.1",
+    "typescript": "^5.8.3"
+  },
+  "scripts": {
+    "clean": "node scripts/build-utils.js clean",
+    "prebuild": "npm run clean",
+    "build:dev": "rollup -c rollup.config.js --environment BUILD:development",
+    "build:prod": "rollup -c rollup.config.js --environment BUILD:production",
+    "build": "npm run build:prod",
+    "build:analyze": "rollup -c rollup.config.js --environment BUILD:production,ANALYZE:true",
+    "build:profile": "cross-env NODE_ENV=production PROFILE=true npm run build:prod",
+    "build:fast": "rollup -c rollup.config.js --environment BUILD:production,SKIP_COMPRESSION:true",
+    "build:ci": "npm run clean && npm run build:prod && npm run validate-build",
+    "watch": "rollup -c rollup.config.js --watch --environment BUILD:development",
+    "dev": "npm run watch",
+    "analyze": "npm run build:analyze",
+    "size-check": "npm run build:prod && node scripts/build-utils.js size-check",
+    "validate-build": "node scripts/build-utils.js validate",
+    "test:build": "npm run build && npm run validate-build",
+    "perf": "npm run build:analyze && npm run size-check"
+  },
+  "browserslist": {
+    "production": [
+      ">0.5%",
+      "not dead",
+      "not op_mini all",
+      "not ie 11",
+      "not android <= 4.4"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

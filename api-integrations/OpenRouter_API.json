@@ -1,0 +1,252 @@
+{
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "bearerFormat": "Bearer",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "email": "nathan.labadie@crowdstrike.com"
+    },
+    "description": "Integration with the OpenRouter API.",
+    "title": "OpenRouter API",
+    "version": ""
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/chat/completions": {
+      "post": {
+        "description": "Creates a completion for the chat message",
+        "operationId": "OpenRouter Chat Completion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "messages": {
+                    "description": "List of messages comprising the conversation.",
+                    "items": {
+                      "properties": {
+                        "content": {
+                          "description": "Content of the message.",
+                          "title": "Content",
+                          "type": "string"
+                        },
+                        "role": {
+                          "default": "user",
+                          "description": "Role of the message sender. ",
+                          "title": "Role",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "content"
+                      ],
+                      "title": "Messages",
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "model": {
+                    "default": "openrouter/auto",
+                    "description": "ID of the model to use.",
+                    "examples": [
+                      "openai/gpt-4-turbo",
+                      "anthropic/claude-3-opus",
+                      "google/gemini-pro"
+                    ],
+                    "title": "Model",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "messages"
+                ],
+                "title": "Json",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "choices": {
+                      "description": "Array of completion choices",
+                      "items": {
+                        "properties": {
+                          "finish_reason": {
+                            "description": "Reason why the completion finished",
+                            "enum": [
+                              "stop",
+                              "length",
+                              "content_filter"
+                            ],
+                            "type": "string"
+                          },
+                          "index": {
+                            "description": "Index of this completion choice",
+                            "type": "integer"
+                          },
+                          "message": {
+                            "properties": {
+                              "content": {
+                                "description": "Content of the message",
+                                "type": "string"
+                              },
+                              "reasoning": {
+                                "description": "Optional reasoning provided by the model",
+                                "type": "string"
+                              },
+                              "refusal": {
+                                "description": "Details if the model refused to respond",
+                                "type": "object"
+                              },
+                              "role": {
+                                "description": "Role of the message sender",
+                                "example": "assistant",
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "native_finish_reason": {
+                            "description": "Provider-specific finish reason",
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "created": {
+                      "description": "Unix timestamp of when the completion was created",
+                      "type": "integer"
+                    },
+                    "id": {
+                      "description": "Unique identifier for the completion",
+                      "type": "string"
+                    },
+                    "model": {
+                      "description": "Model used for the completion",
+                      "type": "string"
+                    },
+                    "object": {
+                      "description": "Type of object returned",
+                      "example": "chat.completion",
+                      "type": "string"
+                    },
+                    "provider": {
+                      "description": "Provider of the model",
+                      "type": "string"
+                    },
+                    "usage": {
+                      "description": "Token usage statistics",
+                      "properties": {
+                        "completion_tokens": {
+                          "description": "Number of tokens in the completion",
+                          "type": "integer"
+                        },
+                        "completion_tokens_details": {
+                          "properties": {
+                            "reasoning_tokens": {
+                              "description": "Number of tokens used for reasoning",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "prompt_tokens": {
+                          "description": "Number of tokens in the prompt",
+                          "type": "integer"
+                        },
+                        "prompt_tokens_details": {
+                          "properties": {
+                            "cached_tokens": {
+                              "description": "Number of cached tokens used",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "total_tokens": {
+                          "description": "Total number of tokens used",
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "description": "Error message",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "error": {
+                      "description": "Authentication error message",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "x-cs-operation-config": {
+          "timeout_seconds": 60,
+          "workflow": {
+            "description": "Send queries to OpenRouter",
+            "expose_to_workflow": true,
+            "name": "OpenRouter Chat Completion",
+            "system": false,
+            "tags": [
+              "OpenRouter"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "servers": [
+    {
+      "url": "https://openrouter.ai/api/v1"
+    }
+  ],
+  "x-cs-multi-instance": true
+}

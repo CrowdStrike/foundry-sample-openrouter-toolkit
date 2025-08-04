@@ -1,0 +1,272 @@
+/* File: src/styles/global.css */
+
+/* Import Tailwind CSS for utility classes */
+@import "tailwindcss";
+
+/* 
+ * Minimal global styles - Falcon Shoelace handles all theming automatically
+ * Only include essential component-specific overrides here
+ */
+
+/* Theme-aware App component styles */
+.app-container {
+  background-color: rgb(var(--cs-background-base));
+  color: rgb(var(--cs-text-primary));
+}
+
+.error-state {
+  background-color: rgb(var(--cs-background-lightest));
+  border: 1px solid rgb(var(--cs-border-color-light));
+}
+
+.error-text {
+  color: rgb(var(--cs-text-critical));
+}
+
+.secondary-text {
+  color: rgb(var(--cs-text-secondary));
+}
+
+.error-button {
+  background-color: rgb(var(--cs-background-critical));
+  color: rgb(var(--cs-text-on-critical));
+  border: 1px solid rgb(var(--cs-border-color-critical));
+}
+
+.error-button:focus {
+  box-shadow: 0 0 0 2px rgb(var(--cs-background-critical) / 0.2);
+}
+
+.loading-state {
+  background-color: rgb(var(--cs-background-base));
+  color: rgb(var(--cs-text-primary));
+}
+
+.loading-spinner {
+  border-color: rgb(var(--cs-border-color-informational));
+}
+
+/* Smooth textarea resizing to prevent jumps and scrollbar flicker */
+sl-textarea::part(textarea) {
+  transition: height 0.15s ease-out;
+  resize: vertical;
+  overflow: hidden; 
+  font-size: 14px; 
+  line-height: 1.5; 
+}
+
+/* Ensure Shoelace components have proper spacing */
+sl-textarea {
+  display: block;
+  margin-bottom: 12px;
+}
+
+sl-select {
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Essential component styling that requires ::part() selectors */
+.compact-copy-btn::part(base) {
+  padding: 4px 6px !important;
+  min-height: auto !important;
+  font-size: 14px !important;
+}
+
+.compact-copy-btn sl-icon {
+  font-size: 14px !important;
+}
+
+.full-width-card::part(base) {
+  padding: 8px 4px;
+  width: 100%;
+}
+
+.full-width-card::part(body) {
+  padding: 0 4px 8px 4px;
+}
+
+/* Advanced Options styling */
+sl-details::part(header),
+sl-details::part(summary) {
+  font-size: 0.8rem !important;
+  font-weight: 500;
+}
+
+/* Model list styling - add padding for better UX */
+sl-select sl-option:not([disabled])::part(base) {
+  padding-left: 1.5rem;
+}
+
+/* Fix icon spacing in select and textarea components */
+sl-select::part(prefix) {
+  margin-right: 8px !important;
+}
+
+sl-textarea::part(prefix) {
+  margin-right: 8px !important;
+}
+
+/* Fix tab alignment and spacing */
+sl-tab-group::part(tabs) {
+  align-items: center;
+}
+
+sl-tab::part(base) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Hide default checkmarks on disabled group header options */
+sl-option[disabled]::part(checked-icon) {
+  display: none !important;
+}
+
+sl-option[disabled]::part(prefix) {
+  display: none !important;
+}
+
+/* Hash option indentation for hierarchical display */
+.hash-option::part(base) {
+  padding-left: 2rem !important;
+}
+
+/* Response content container with enhanced scrollbar */
+.response-content {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--cs-border-color-light)) transparent;
+  padding: 0.75rem 0.75rem 0.75rem 1.25rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+
+.response-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.response-content::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.response-content::-webkit-scrollbar-thumb {
+  background-color: rgb(var(--cs-border-color-light));
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.response-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(var(--cs-text-secondary));
+}
+
+/* Simplified markdown content styling for response display */
+.response-content h1,
+.response-content h2,
+.response-content h3,
+.response-content h4,
+.response-content h5,
+.response-content h6 {
+  color: rgb(var(--cs-text-primary));
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.response-content h1:first-child,
+.response-content h2:first-child,
+.response-content h3:first-child {
+  margin-top: 0;
+}
+
+.response-content h1 {
+  font-size: 1.25rem;
+}
+
+.response-content h2 {
+  font-size: 1.15rem;
+}
+
+.response-content h3 {
+  font-size: 1.1rem;
+}
+
+.response-content p {
+  color: rgb(var(--cs-text-primary));
+  margin-bottom: 1rem;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.response-content strong {
+  color: rgb(var(--cs-text-primary));
+  font-weight: 700;
+}
+
+.response-content ul,
+.response-content ol {
+  color: rgb(var(--cs-text-primary));
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.response-content li {
+  color: rgb(var(--cs-text-primary));
+  margin-bottom: 0.25rem;
+  line-height: 1.6;
+}
+
+.response-content code {
+  color: rgb(var(--cs-text-primary));
+  background-color: rgb(var(--cs-background-light));
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+  font-family: 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+}
+
+.response-content pre {
+  background-color: rgb(var(--cs-background-light));
+  color: rgb(var(--cs-text-primary));
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  font-size: 0.9rem;
+}
+
+.response-content pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.response-content blockquote {
+  border-left: 4px solid rgb(var(--cs-border-color-light));
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: rgb(var(--cs-text-secondary));
+  font-style: italic;
+}
+
+/* Ensure proper spacing for the first and last elements */
+.response-content > *:first-child {
+  margin-top: 0;
+}
+
+.response-content > *:last-child {
+  margin-bottom: 0.5rem;
+}
