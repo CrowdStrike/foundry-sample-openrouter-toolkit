@@ -3,7 +3,7 @@ on: [ push, pull_request ]
 
 jobs:
   test-function:
-    name: Test openrouter-toolkit-chat-completion
+    name: Test function
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

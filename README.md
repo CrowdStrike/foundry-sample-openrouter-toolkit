@@ -94,7 +94,7 @@ A CrowdStrike Foundry extension that provides seamless integration with OpenRout
 - **Context Awareness**: Automatically incorporates incident data for enhanced analysis
 - **Flexible Configuration**: Customizable model selection, temperature, and provider preferences
 
-See this sample's [App docs README](app_docs/README.md) for more information about its features.
+See this sample's [App docs README](app_docs/README.md) for more information.
 
 ## Foundry resources
 
