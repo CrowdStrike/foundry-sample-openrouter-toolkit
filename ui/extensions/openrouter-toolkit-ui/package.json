@@ -9,8 +9,8 @@
     "@crowdstrike/foundry-js": "^0.18.0",
     "@shoelace-style/shoelace": "^2.20.1",
     "@tailwindcss/postcss": "^4.1.11",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "react-markdown": "^10.1.0"
   },
   "devDependencies": {
@@ -23,8 +23,8 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-replace": "^6.0.2",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
     "@web/rollup-plugin-html": "^2.3.0",
     "autoprefixer": "^10.4.21",
     "cross-env": "^7.0.3",
