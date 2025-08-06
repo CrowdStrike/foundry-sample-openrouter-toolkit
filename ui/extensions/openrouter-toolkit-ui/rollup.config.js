@@ -78,36 +78,36 @@ const terserOptions = {
 // Enhanced code splitting strategy for production
 const getManualChunks = isProd ? (id) => {
   // Core dependencies
-  if (id.includes('node_modules/react/') || 
+  if (id.includes('node_modules/react/') ||
       id.includes('node_modules/react-dom/') ||
       id.includes('node_modules/react/jsx-runtime')) {
     return 'vendor-react';
   }
-  
+
   // Router
   if (id.includes('node_modules/react-router') ||
       id.includes('node_modules/react-router-dom')) {
     return 'vendor-router';
   }
-  
+
   // Shoelace components
   if (id.includes('node_modules/@shoelace-style/shoelace')) {
     return 'vendor-shoelace';
   }
-  
+
   // Foundry JS
   if (id.includes('node_modules/@crowdstrike/foundry-js')) {
     return 'vendor-foundry';
   }
-  
+
   // Other vendor code (including falcon-shoelace)
-  if (id.includes('node_modules') && 
-      !id.includes('react') && 
+  if (id.includes('node_modules') &&
+      !id.includes('react') &&
       !id.includes('@shoelace-style/shoelace') &&
       !id.includes('foundry')) {
     return 'vendor-utils';
   }
-  
+
   // Application code stays in its own chunks
   return undefined;
 } : undefined;
@@ -116,7 +116,7 @@ const getManualChunks = isProd ? (id) => {
 const postcssPlugins = [
   // Add Tailwind CSS processing (v4 handles autoprefixer automatically)
   tailwindcss(),
-  
+
   // Only use PurgeCSS in production - updated with Tailwind classes
   isProd && postcssPurgecss({
     content: ['./src/**/*.{js,jsx,ts,tsx,html}'],
@@ -127,7 +127,7 @@ const postcssPlugins = [
       greedy: [/sl-.+/, /^(sm|md|lg|xl|2xl):/]
     }
   }),
-  
+
   // Add CSS minification
   isProd && cssnanoPlugin({
     preset: [cssnanoPresetAdvanced, {
@@ -172,7 +172,7 @@ export default defineConfig([
       json({
         compact: isProd
       }),
-      
+
       // Replace environment variables
       replace({
         preventAssignment: true,
@@ -182,13 +182,13 @@ export default defineConfig([
         'IS_PRODUCTION': JSON.stringify(isProd),
         '__DEV__': JSON.stringify(!isProd)
       }),
-      
+
       // Optimize images in production
       isProd && image({
         include: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg'],
         dom: true
       }),
-      
+
       // Transpile code with Babel
       babel({
         presets: [
@@ -203,7 +203,7 @@ export default defineConfig([
         ],
         babelHelpers: 'bundled',
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
-        exclude: 'node_modules/**',
+        exclude: ['node_modules/**'],
         compact: isProd,
         generatorOpts: {
           compact: isProd,
@@ -211,14 +211,14 @@ export default defineConfig([
           maxSize: 500000 // Reduced from 1MB for better chunking
         }
       }),
-      
+
       // Convert CommonJS modules to ES modules
       commonjs({
         transformMixedEsModules: true,
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
         include: 'node_modules/**'
       }),
-      
+
       // Resolve modules
       nodeResolve({
         browser: true,
@@ -226,7 +226,7 @@ export default defineConfig([
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
         preferBuiltins: false
       }),
-      
+
       // Process CSS with PostCSS
       postcss({
         extract: `styles-${hash}.css`,
@@ -239,7 +239,7 @@ export default defineConfig([
         autoModules: true,
         namedExports: true
       }),
-      
+
       // Process HTML files
       html({
         minify: isProd,
@@ -249,7 +249,7 @@ export default defineConfig([
             '</head>',
             `<link rel="stylesheet" href="styles-${hash}.css"></head>`
           );
-          
+
           // In production, add preload hints for critical chunks
           if (isProd) {
             const criticalChunks = ['vendor-react', 'vendor-shoelace'];
@@ -257,32 +257,32 @@ export default defineConfig([
               .filter(key => criticalChunks.some(chunk => key.includes(chunk)))
               .map(key => `<link rel="preload" href="${key}" as="script" crossorigin>`)
               .join('');
-              
+
             modified = modified.replace('<head>', `<head>\n    ${preloadLinks}`);
           }
-          
+
           return modified;
         }
       }),
-      
+
       // In production, add custom code to minify output
       isProd && {
         name: 'terser',
         renderChunk: async (code) => {
           if (!isProd) return code;
-          
+
           const result = await minify(code, terserOptions);
           return result.code;
         }
       },
-      
+
       // Add compression in production if enabled
       useCompression && gzip({
         filter: (file) => file.endsWith('.js') || file.endsWith('.css') || file.endsWith('.html'),
         fileName: '.gz',
         additionalFiles: []
       }),
-      
+
       // Add Brotli compression (better than gzip - ~20% smaller files)
       useCompression && brotli({
         filter: (file) => file.endsWith('.js') || file.endsWith('.css') || file.endsWith('.html'),
@@ -291,7 +291,7 @@ export default defineConfig([
           mode: 0 // Generic mode (0) for maximum compression
         }
       }),
-      
+
       // Add visualization in analyze mode
       shouldAnalyze && visualizer({
         filename: 'dist/stats.html',
@@ -301,14 +301,14 @@ export default defineConfig([
         gzipSize: true,
         brotliSize: true
       }),
-      
+
       // Add a custom plugin to log build performance
       {
         name: 'build-performance',
         buildEnd() {
           const buildTime = Date.now() - startTime;
           console.log(`\nBuild completed in ${buildTime / 1000}s`);
-          
+
           // In production, log file sizes
           if (isProd) {
             try {
@@ -316,7 +316,7 @@ export default defineConfig([
               if (fs.existsSync(distPath)) {
                 console.log('\nGenerated files:');
                 const files = fs.readdirSync(distPath);
-                
+
                 files.forEach(file => {
                   const filePath = path.join(distPath, file);
                   const stats = fs.statSync(filePath);
@@ -331,7 +331,10 @@ export default defineConfig([
         }
       }
     ].filter(Boolean), // Filter out false values for conditional plugins
-    
+    watch: {
+      exclude: ['dist/**', 'node_modules/**']
+    },
+
     // Adjust how warnings are handled
     onwarn: (msg, warn) => {
       // Ignore common warnings
@@ -343,10 +346,10 @@ export default defineConfig([
       ) {
         return;
       }
-      
+
       warn(msg);
     },
-    
+
     // Enable tree shaking
     treeshake: {
       moduleSideEffects: 'no-external',
