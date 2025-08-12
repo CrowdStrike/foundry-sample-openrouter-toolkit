@@ -43,7 +43,7 @@ jobs:
         working-directory: functions/openrouter-toolkit-chat-completion
 
   build-ui:
-    name: Build UI
+    name: Build and Test UI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +55,9 @@ jobs:
           cache-dependency-path: 'ui/extensions/openrouter-toolkit-ui/package-lock.json'
       - name: Install dependencies
         run: npm ci
+        working-directory: ui/extensions/openrouter-toolkit-ui
+      - name: Run unit tests
+        run: npm run test:ci
         working-directory: ui/extensions/openrouter-toolkit-ui
       - name: Build React app
         run: npm run build:ci
