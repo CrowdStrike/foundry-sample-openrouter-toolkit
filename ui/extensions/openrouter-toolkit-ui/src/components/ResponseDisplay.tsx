@@ -30,7 +30,7 @@ const ResponseDisplay = React.memo(({
   const displayModel = getDisplayModelName(modelName, online);
 
   return (
-    <div className="h-[480px] p-3 bg-surface-base rounded-lg focus:outline-none border border-lines-light" tabIndex={-1}>
+    <div className="h-[480px] p-3 bg-surface-base rounded-lg focus:outline-none border border-lines-light" tabIndex={-1} data-testid="response-display">
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-96 gap-3 text-body-and-labels">
           <SlSpinner />
@@ -51,11 +51,12 @@ const ResponseDisplay = React.memo(({
                   : "text-body-and-labels"
               }`}
               title={copyButtonText}
+              data-testid="copy-button"
             >
               <SlIcon name={copyIconState} />
             </SlButton>
           </div>
-          <div className="flex-1 overflow-y-auto bg-transparent text-text-and-icons response-content">
+          <div className="flex-1 overflow-y-auto bg-transparent text-text-and-icons response-content" data-testid="response">
             <ReactMarkdown>
               {responseText}
             </ReactMarkdown>

@@ -23,80 +23,42 @@ jest.mock('@shoelace-style/shoelace/dist/react', () => ({
     React.createElement('div', { 'data-testid': 'sl-tab-panel', 'data-name': name, ...props }, children),
 }));
 
-// Mock utility functions
-const mockValidateQuery = jest.fn();
-const mockWait = jest.fn((ms: number) => Promise.resolve());
-const mockGetDisplayModelName = jest.fn((model: string, online: boolean) => model);
-const mockFormatErrorMessage = jest.fn((error: any) => error.message || 'Unknown error');
-const mockGenerateCacheKey = jest.fn((...args: any[]) => `cache-key-${args.join('-')}`);
-
-jest.mock('./utils/helpers', () => ({
-  validateQuery: mockValidateQuery,
-  wait: mockWait,
-  getDisplayModelName: mockGetDisplayModelName,
-  formatErrorMessage: mockFormatErrorMessage,
-  generateCacheKey: mockGenerateCacheKey,
-}));
+// Remove global helpers mock - let individual tests mock as needed
 
 const mockResponseCache = {
   get: jest.fn(),
   set: jest.fn(),
   clear: jest.fn(),
+  size: jest.fn(),
+  cleanup: jest.fn(),
+  getStats: jest.fn().mockReturnValue({
+    size: 0,
+    maxSize: 100,
+    hitRate: 0,
+    totalHits: 0,
+    totalMisses: 0
+  })
 };
 
-jest.mock('./utils/cache', () => ({
-  responseCache: mockResponseCache,
-}));
-
-jest.mock('./utils/constants', () => ({
-  DEFAULT_MODEL: 'test-model',
-  DEFAULT_TEMPERATURE: 0.7,
-  DEFAULT_PROVIDER_SORT: 'test-sort',
-}));
-
-// Mock child components
-jest.mock('./components/QueryForm', () => {
-  return function MockQueryForm(props: any) {
-    return React.createElement('div', { 'data-testid': 'query-form' },
-      React.createElement('input', {
-        'data-testid': 'query-input',
-        value: props.query,
-        onChange: (e: any) => props.setQuery(e.target.value)
-      }),
-      React.createElement('button', {
-        'data-testid': 'submit-button',
-        onClick: props.handleSubmit,
-        disabled: props.loading
-      }, 'Submit')
-    );
+jest.mock('./utils/cache', () => {
+  const actual = jest.requireActual('./utils/cache');
+  return {
+    ...actual,
+    responseCache: mockResponseCache,
   };
 });
 
-jest.mock('./components/ResponseDisplay', () => {
-  return function MockResponseDisplay(props: any) {
-    const children = [];
-    
-    if (props.loading) {
-      children.push(React.createElement('div', { 'data-testid': 'loading', key: 'loading' }, 'Loading...'));
-    }
-    
-    if (props.errorMessage) {
-      children.push(React.createElement('div', { 'data-testid': 'error', key: 'error' }, props.errorMessage));
-    }
-    
-    if (props.responseText) {
-      children.push(React.createElement('div', { 'data-testid': 'response', key: 'response' }, props.responseText));
-    }
-    
-    children.push(React.createElement('button', {
-      'data-testid': 'copy-button',
-      onClick: props.copyToClipboard,
-      key: 'copy-button'
-    }, props.copyButtonText));
-
-    return React.createElement('div', { 'data-testid': 'response-display' }, ...children);
+jest.mock('./utils/constants', () => {
+  const actual = jest.requireActual('./utils/constants');
+  return {
+    ...actual,
+    DEFAULT_MODEL: 'test-model',
+    DEFAULT_TEMPERATURE: 0.7,
+    DEFAULT_PROVIDER_SORT: 'test-sort',
   };
 });
+
+// Remove global component mocks - let individual tests mock as needed
 
 // Create global test utilities
 const mockFalconApi = {
@@ -127,11 +89,6 @@ const mockFalconApi = {
 // Export for use in tests
 export {
   mockFalconApi,
-  mockValidateQuery,
-  mockWait,
-  mockGetDisplayModelName,
-  mockFormatErrorMessage,
-  mockGenerateCacheKey,
   mockResponseCache,
   mockWriteText,
 };
@@ -141,3 +98,4 @@ const originalConsole = console;
 Object.defineProperty(console, 'debug', { value: jest.fn(), writable: true });
 Object.defineProperty(console, 'error', { value: jest.fn(), writable: true });
 Object.defineProperty(console, 'warn', { value: jest.fn(), writable: true });
+Object.defineProperty(console, 'log', { value: jest.fn(), writable: true });
