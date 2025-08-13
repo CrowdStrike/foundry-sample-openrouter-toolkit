@@ -46,7 +46,7 @@ function App(): React.ReactNode {
   return (
     <ErrorBoundary>
       <React.StrictMode>
-        <div className="app-container font-sans min-h-screen p-4">
+        <div className="app-container font-sans min-h-screen p-4" data-testid="app-container">
           <Home falcon={falcon} />
         </div>
       </React.StrictMode>

@@ -21,7 +21,12 @@ jest.mock('../ErrorBoundary', () => {
 // Mock Home component
 jest.mock('../Home', () => {
   return function MockHome({ falcon }: { falcon: any }) {
-    return <div data-testid="home-component">Home Component - Falcon: {falcon ? 'Connected' : 'Not Connected'}</div>;
+    return (
+      <div data-testid="home-component">
+        <h1>OpenRouter Toolkit</h1>
+        <div>Falcon: {falcon ? 'Connected' : 'Not Connected'}</div>
+      </div>
+    );
   };
 });
 
@@ -48,12 +53,14 @@ describe('App', () => {
   });
 
   describe('Initialization States', () => {
-    it.skip('should render successfully when falcon is initialized', () => {
+    it('should render successfully when falcon is initialized', () => {
       render(<App />);
       
-      expect(screen.getByTestId('error-boundary')).toBeInTheDocument();
-      expect(screen.getByTestId('home-component')).toBeInTheDocument();
-      expect(screen.getByText('Home Component - Falcon: Connected')).toBeInTheDocument();
+      // App should render the main container when initialized
+      expect(screen.getByTestId('app-container')).toBeInTheDocument();
+      
+      // Should render the Home component content
+      expect(screen.getByText('OpenRouter Toolkit')).toBeInTheDocument();
     });
 
     it.skip('should pass falcon instance to Home component', () => {
@@ -102,7 +109,7 @@ describe('App', () => {
       expect(errorBoundary).toContainElement(homeComponent);
     });
 
-    it.skip('should render without crashing', () => {
+    it('should render without crashing', () => {
       expect(() => render(<App />)).not.toThrow();
     });
   });

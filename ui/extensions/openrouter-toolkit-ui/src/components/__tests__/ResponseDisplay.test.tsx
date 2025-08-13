@@ -63,17 +63,23 @@ describe('ResponseDisplay', () => {
   });
 
   describe('Loading State', () => {
-    it.skip('should show loading spinner when loading is true', () => {
+    it('should show loading spinner when loading is true', () => {
       render(<ResponseDisplay {...defaultProps} loading={true} />);
 
       expect(screen.getByTestId('spinner')).toBeInTheDocument();
-      expect(screen.getByText('Waiting for response from')).toBeInTheDocument();
+      // Use a more flexible text matcher for text split by br tags  
+      expect(screen.getByText((content, element) => {
+        return element?.textContent?.includes('Waiting for response from') || false;
+      })).toBeInTheDocument();
     });
 
-    it.skip('should display model name in loading state', () => {
+    it('should display model name in loading state', () => {
       render(<ResponseDisplay {...defaultProps} loading={true} modelName="gpt-4" />);
 
-      expect(screen.getByText('gpt-4')).toBeInTheDocument();
+      // Check that the model name appears in the loading text
+      expect(screen.getByText((content, element) => {
+        return element?.textContent?.includes('gpt-4') || false;
+      })).toBeInTheDocument();
     });
 
     it.skip('should display model name with online suffix when online is true', () => {
@@ -96,7 +102,7 @@ describe('ResponseDisplay', () => {
   });
 
   describe('Response State', () => {
-    it.skip('should render response text as markdown when available', () => {
+    it('should render response text as markdown when available', () => {
       const responseText = '# Hello World\nThis is a test response.';
       render(<ResponseDisplay {...defaultProps} responseText={responseText} />);
 
