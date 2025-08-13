@@ -20,7 +20,7 @@ jobs:
         run: |
           if [ -f "test_main.py" ]; then
             echo "Running Python tests with pytest and coverage reporting"
-            pytest test_main.py --cov=main --cov-report=term --cov-report=html -v
+            pytest test_main.py --cov=main --cov-report=term --cov-report=html --cov-fail-under=80 -v
             echo "Coverage report generated in htmlcov/"
           else
             echo "No test_main.py found, skipping tests"
