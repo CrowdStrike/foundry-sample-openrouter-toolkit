@@ -14,7 +14,7 @@ from constants import (
 
 
 @dataclass
-class OSINTEntities:
+class OSINTEntities:  # pylint: disable=too-many-instance-attributes
     """Structured representation of OSINT-relevant entities extracted from context."""
 
     # File indicators
@@ -36,7 +36,7 @@ class OSINTEntities:
     data_sources: List[str]
 
 
-class ContextAnalyzer:
+class ContextAnalyzer:  # pylint: disable=too-few-public-methods
     """Extract and classify OSINT-relevant entities from incident context data."""
 
     def __init__(self):
@@ -320,7 +320,7 @@ class ContextAnalyzer:
 
         return False
 
-    def _classify_incident_type(self, entities: OSINTEntities) -> str:
+    def _classify_incident_type(self, entities: OSINTEntities) -> str:  # pylint: disable=too-many-return-statements
         """Classify the incident type based on available entities."""
 
         # Count entity types
@@ -337,19 +337,19 @@ class ContextAnalyzer:
 
         if entity_types == 0:
             return "unknown"
-        elif entity_types == 1:
+
+        if entity_types == 1:
             if has_hashes or has_files:
                 return "file-based"
-            elif has_domains:
+            if has_domains:
                 return "email-based"
-            elif has_ips:
+            if has_ips:
                 return "network-based"
-            elif has_mitre:
+            if has_mitre:
                 return "technique-based"
-        else:
-            return "mixed-indicators"
+            return "general-security"
 
-        return "general-security"
+        return "mixed-indicators"
 
     def _calculate_entity_counts(self, entities: OSINTEntities) -> Dict[str, int]:
         """Calculate entity counts for metadata."""

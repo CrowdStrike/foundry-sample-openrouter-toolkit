@@ -22,7 +22,7 @@ from prompt_builder import PromptBuilder
 
 
 # Configuration management (simplified from original)
-class Config:
+class Config:  # pylint: disable=too-few-public-methods
     """Configuration class for managing application settings."""
 
     MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
@@ -32,7 +32,7 @@ class Config:
 
 
 # Configure function instance
-func = Function.instance()
+FUNC = Function.instance()
 
 
 @dataclass
@@ -61,7 +61,7 @@ class ResponseData:
     analysis_type: str = "general"
 
 
-def validate_and_extract_params(
+def validate_and_extract_params(  # pylint: disable=too-many-branches,too-many-locals
     request: Request, logger
 ) -> tuple[RequestParams, Optional[Response]]:
     """
@@ -98,7 +98,10 @@ def validate_and_extract_params(
 
     # Basic security validation
     if len(user_prompt) > Config.MAX_PROMPT_LENGTH:
-        error_msg = f"Prompt too long ({len(user_prompt)} characters). Maximum allowed: {Config.MAX_PROMPT_LENGTH}"
+        error_msg = (
+            f"Prompt too long ({len(user_prompt)} characters). "
+            f"Maximum allowed: {Config.MAX_PROMPT_LENGTH}"
+        )
         logger.error(f"[{request_id}] {error_msg}")
         return RequestParams("", "", request_id=request_id), Response(
             errors=[APIError(message=error_msg)], code=400
@@ -130,7 +133,10 @@ def validate_and_extract_params(
     if provider_sort:
         valid_sorts = ["price", "throughput", "latency"]
         if provider_sort not in valid_sorts:
-            error_msg = f"Invalid provider sort option '{provider_sort}'. Valid options: {', '.join(valid_sorts)}"
+            error_msg = (
+                f"Invalid provider sort option '{provider_sort}'. "
+                f"Valid options: {', '.join(valid_sorts)}"
+            )
             logger.error(f"[{request_id}] {error_msg}")
             return RequestParams("", "", request_id=request_id), Response(
                 errors=[APIError(message=error_msg)], code=400
@@ -184,7 +190,7 @@ def prepare_api_request(params: RequestParams, final_prompt: str) -> Dict[str, A
             {
                 "id": "web",
                 "max_results": 3,
-                "search_prompt": "Current cybersecurity threat intelligence, IOC analysis, and security research findings relevant to:",
+                "search_prompt": "Cybersecurity threat intelligence and IOC analysis relevant to:",
             }
         ]
 
@@ -199,16 +205,15 @@ def prepare_api_request(params: RequestParams, final_prompt: str) -> Dict[str, A
     }
 
 
-def extract_openrouter_response(
+def extract_openrouter_response(  # pylint: disable=too-many-locals
     api_result: Any, params: RequestParams, logger
 ) -> tuple[Optional[ResponseData], Optional[Response]]:
     """Extract and validate the response from the OpenRouter API."""
     try:
         # Progressive validation with clear error messages
         if not isinstance(api_result, dict):
-            raise TypeError(
-                f"Expected dict for API result, got {type(api_result).__name__}"
-            )
+            result_type = type(api_result).__name__
+            raise TypeError(f"Expected dict for API result, got {result_type}")
 
         body = api_result.get("body")
         if not body or not isinstance(body, dict):
@@ -233,12 +238,11 @@ def extract_openrouter_response(
             try:
                 response_body = json.loads(response_body)
             except json.JSONDecodeError as je:
-                raise ValueError(f"Failed to parse response JSON: {str(je)}")
+                raise ValueError(f"Failed to parse response JSON: {str(je)}") from je
 
         if not isinstance(response_body, dict):
-            raise TypeError(
-                f"Expected dict for parsed response_body, got {type(response_body).__name__}"
-            )
+            response_type = type(response_body).__name__
+            raise TypeError(f"Expected dict for parsed response_body, got {response_type}")
 
         choices = response_body.get("choices")
         if not choices or not isinstance(choices, list) or len(choices) == 0:
@@ -316,15 +320,15 @@ def build_context_aware_prompt(params: RequestParams, logger) -> tuple[str, str]
 
         return enhanced_prompt, classification.primary_type.value
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.warning(f"[{params.request_id}] Error in context analysis: {str(e)}")
         logger.debug(f"[{params.request_id}] {traceback.format_exc()}")
         # Fall back to original prompt if context analysis fails
         return params.user_prompt, "general"
 
 
-@func.handler(method="POST", path="/openrouter-toolkit-chat-completion")
-def openrouter_toolkit_chat_completion(request: Request, config, logger) -> Response:
+@FUNC.handler(method="POST", path="/openrouter-toolkit-chat-completion")
+def openrouter_toolkit_chat_completion(request: Request, config, logger) -> Response:  # pylint: disable=unused-argument,too-many-locals,broad-exception-caught,too-many-statements
     """
     Process OpenRouter chat completion requests with optional context-aware analysis.
     """
@@ -345,9 +349,13 @@ def openrouter_toolkit_chat_completion(request: Request, config, logger) -> Resp
             f", provider sort: {params.provider_sort}" if params.provider_sort else ""
         )
 
+        # Log request processing details
+        model_name = params.model_name
+        temp = params.temperature
+        status_combined = f"{context_status}{online_status}{provider_status}"
         logger.info(
-            f"[{request_id}] Processing request - Model: {params.model_name}, "
-            f"Temperature: {params.temperature} ({context_status}{online_status}{provider_status})"
+            f"[{request_id}] Processing request - Model: {model_name}, "
+            f"Temperature: {temp} ({status_combined})"
         )
 
         # Build context-aware prompt
@@ -377,7 +385,7 @@ def openrouter_toolkit_chat_completion(request: Request, config, logger) -> Resp
                 result = api.execute_command(body=body)
                 break
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 retry_count += 1
                 if retry_count <= max_retries:
                     logger.warning(
@@ -428,7 +436,7 @@ def openrouter_toolkit_chat_completion(request: Request, config, logger) -> Resp
             code=200,
         )
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         request_id = params.request_id
         logger.error(
             f"[{request_id}] Unhandled exception: {type(e).__name__} - {str(e)}"
@@ -438,4 +446,4 @@ def openrouter_toolkit_chat_completion(request: Request, config, logger) -> Resp
 
 
 if __name__ == "__main__":
-    func.run()
+    FUNC.run()

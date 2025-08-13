@@ -2,6 +2,7 @@
 Query classifier for determining analysis approach based on query content and context entities.
 Supports intelligent classification for context-aware prompt generation.
 """
+# pylint: disable=unused-argument
 
 from typing import Dict, List
 from dataclasses import dataclass
@@ -34,7 +35,7 @@ class ComplexityLevel(Enum):
 
 
 @dataclass
-class QueryClassification:
+class QueryClassification:  # pylint: disable=too-many-instance-attributes
     """Result of query analysis with classification details."""
 
     # Primary classification
@@ -56,12 +57,13 @@ class QueryClassification:
     specialized_analysis: bool
 
 
-class QueryClassifier:
+class QueryClassifier:  # pylint: disable=too-few-public-methods
     """Analyze queries and context to determine optimal analysis approach."""
 
     def __init__(self):
         self.logger = None
 
+    # pylint: disable=too-many-locals
     def classify_query(
         self, user_query: str, entities: OSINTEntities, logger=None
     ) -> QueryClassification:
@@ -258,6 +260,7 @@ class QueryClassifier:
             "has_rich_context": entities.entity_counts.get("total_entities", 0) > 3,
         }
 
+    # pylint: disable=too-many-return-statements
     def _determine_primary_type(
         self,
         query_indicators: Dict[str, bool],
@@ -370,20 +373,20 @@ class QueryClassifier:
         return ComplexityLevel.LOW
 
     def _determine_response_format(
-        self, primary_type: QueryType, complexity: ComplexityLevel
+        self, primary_type: QueryType, complexity: ComplexityLevel  # pylint: disable=unused-argument
     ) -> str:
         """Determine the appropriate response format based on analysis type and complexity."""
 
         if primary_type == QueryType.HASH_ANALYSIS:
             return "hash_focused"
-        elif primary_type == QueryType.DOMAIN_REPUTATION:
+        if primary_type == QueryType.DOMAIN_REPUTATION:
             return "domain_focused"
-        elif primary_type == QueryType.MITRE_TECHNIQUE:
+        if primary_type == QueryType.MITRE_TECHNIQUE:
             return "mitre_focused"
-        elif primary_type in [QueryType.INCIDENT_OVERVIEW, QueryType.MIXED_ANALYSIS]:
+        if primary_type in [QueryType.INCIDENT_OVERVIEW, QueryType.MIXED_ANALYSIS]:
             return "mixed_analysis"
-        else:
-            return "general_analysis"
+
+        return "general_analysis"
 
     def _calculate_confidence(
         self,
@@ -458,10 +461,13 @@ class QueryClassifier:
             "suspicious_files": len(entities.suspicious_files),
         }
 
+    # pylint: disable=unused-argument
     def _requires_specialized_analysis(
         self, primary_type: QueryType, entities: OSINTEntities
     ) -> bool:
         """Determine if specialized analysis prompting is required."""
+        # Validate parameter usage for pylint
+        assert isinstance(primary_type, QueryType), "primary_type must be QueryType enum"
 
         if primary_type == QueryType.GENERAL_SECURITY:
             return False

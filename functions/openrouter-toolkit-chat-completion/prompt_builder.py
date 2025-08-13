@@ -10,10 +10,10 @@ from constants import (
     WRITING_STYLE_GUIDANCE,
 )
 from context_analyzer import OSINTEntities
-from query_classifier import QueryClassification, QueryType, ComplexityLevel
+from query_classifier import QueryClassification, QueryType, ComplexityLevel, QueryClassifier
 
 
-class PromptBuilder:
+class PromptBuilder:  # pylint: disable=too-few-public-methods
     """Build context-aware prompts for OSINT security analysis."""
 
     def __init__(self):
@@ -70,7 +70,9 @@ class PromptBuilder:
 
         # Add final anti-recommendation reminder
         prompt_parts.append(
-            "\n=== FINAL REMINDER ===\nProvide ONLY factual intelligence analysis. Do NOT include any recommendations, suggestions, or action items in your response."
+            "\n=== FINAL REMINDER ===\n"
+            "Provide ONLY factual intelligence analysis. "
+            "Do NOT include any recommendations, suggestions, or action items in your response."
         )
 
         # Add the user's actual query
@@ -85,7 +87,7 @@ class PromptBuilder:
 
         return final_prompt
 
-    def _build_context_summary(self, entities: OSINTEntities) -> str:
+    def _build_context_summary(self, entities: OSINTEntities) -> str:  # pylint: disable=too-many-locals
         """Build a summary of available context entities."""
 
         summary_parts = []
@@ -283,7 +285,7 @@ class PromptBuilder:
 - Prioritize findings by threat level and organizational impact
 - Present comprehensive intelligence assessment with factual conclusions
 """
-        elif complexity == ComplexityLevel.MEDIUM:
+        if complexity == ComplexityLevel.MEDIUM:
             return """
 **Medium Complexity Analysis Guidelines:**
 - Structure response with clear logical flow
@@ -291,8 +293,8 @@ class PromptBuilder:
 - Provide context for technical details
 - Focus on most relevant threats and indicators
 """
-        else:
-            return """
+
+        return """
 **Focused Analysis Guidelines:**
 - Provide direct, comprehensive analysis
 - Include relevant technical details
@@ -380,8 +382,6 @@ def quick_build_prompt(user_query: str, entities: OSINTEntities) -> str:
     Returns:
         Basic context-aware prompt
     """
-    from query_classifier import QueryClassifier
-
     # Quick classification
     classifier = QueryClassifier()
     classification = classifier.classify_query(user_query, entities)
