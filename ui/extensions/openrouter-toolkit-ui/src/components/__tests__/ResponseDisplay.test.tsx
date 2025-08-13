@@ -67,19 +67,21 @@ describe('ResponseDisplay', () => {
       render(<ResponseDisplay {...defaultProps} loading={true} />);
 
       expect(screen.getByTestId('spinner')).toBeInTheDocument();
-      // Use a more flexible text matcher for text split by br tags  
-      expect(screen.getByText((content, element) => {
+      // Use getAllByText since there might be multiple matching elements
+      const elementsWithWaitingText = screen.getAllByText((content, element) => {
         return element?.textContent?.includes('Waiting for response from') || false;
-      })).toBeInTheDocument();
+      });
+      expect(elementsWithWaitingText.length).toBeGreaterThan(0);
     });
 
     it('should display model name in loading state', () => {
       render(<ResponseDisplay {...defaultProps} loading={true} modelName="gpt-4" />);
 
-      // Check that the model name appears in the loading text
-      expect(screen.getByText((content, element) => {
+      // Check that the model name appears in the loading text (use getAllByText since there might be multiple)
+      const elementsWithModelName = screen.getAllByText((content, element) => {
         return element?.textContent?.includes('gpt-4') || false;
-      })).toBeInTheDocument();
+      });
+      expect(elementsWithModelName.length).toBeGreaterThan(0);
     });
 
     it.skip('should display model name with online suffix when online is true', () => {
@@ -107,7 +109,8 @@ describe('ResponseDisplay', () => {
       render(<ResponseDisplay {...defaultProps} responseText={responseText} />);
 
       expect(screen.getByTestId('markdown-content')).toBeInTheDocument();
-      expect(screen.getByTestId('markdown-content')).toHaveTextContent(responseText);
+      // Check for the actual rendered content, not the raw markdown
+      expect(screen.getByTestId('markdown-content')).toHaveTextContent('Hello World This is a test response.');
     });
 
     it('should show copy button when response text is available', () => {
