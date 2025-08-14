@@ -87,23 +87,26 @@ class PromptBuilder:
 
         return final_prompt
 
+    def validate_inputs(
+        self, user_query: str, entities: OSINTEntities, classification: QueryClassification
+    ) -> bool:
+        """Validate inputs for prompt building."""
+        if not user_query or not user_query.strip():
+            return False
+        if not isinstance(entities, OSINTEntities):
+            return False
+        if not isinstance(classification, QueryClassification):
+            return False
+        return True
+
     def _build_context_summary(self, entities: OSINTEntities) -> str:
         """Build a summary of available context entities."""
-
         summary_parts = []
 
         # File hash context
         total_hashes = sum(len(hashes) for hashes in entities.file_hashes.values())
         if total_hashes > 0:
-            hash_details = []
-            for hash_type, hashes in entities.file_hashes.items():
-                if hashes:
-                    count = len(hashes)
-                    sample = hashes[0][:16] + "..." if hashes[0] else ""
-                    hash_details.append(
-                        f"{count} {hash_type.upper()} hash{'es' if count > 1 else ''} (e.g., {sample})"
-                    )
-
+            hash_details = self._build_file_hash_details(entities)
             if hash_details:
                 summary_parts.append(
                     f"**File Hashes Available:** {', '.join(hash_details)}"
@@ -112,7 +115,7 @@ class PromptBuilder:
         # Domain context
         if entities.email_domains:
             domain_count = len(entities.email_domains)
-            domain_sample = entities.email_domains[0] if entities.email_domains else ""
+            domain_sample = entities.email_domains[0]
             summary_parts.append(
                 f"**Email Domains:** {domain_count} domain{'s' if domain_count > 1 else ''} "
                 f"(e.g., {domain_sample})"
@@ -121,43 +124,28 @@ class PromptBuilder:
         # Public IP context
         if entities.public_ips:
             ip_count = len(entities.public_ips)
-            ip_sample = entities.public_ips[0] if entities.public_ips else ""
+            ip_sample = entities.public_ips[0]
             summary_parts.append(
                 f"**Public IP Addresses:** {ip_count} address{'es' if ip_count > 1 else ''} "
                 f"(e.g., {ip_sample})"
             )
 
         # MITRE context
-        mitre_items = []
-        if entities.mitre_techniques:
-            mitre_items.append(
-                f"{len(entities.mitre_techniques)} technique{'s' if len(entities.mitre_techniques) > 1 else ''}"
-            )
-        if entities.mitre_tactics:
-            mitre_items.append(
-                f"{len(entities.mitre_tactics)} tactic{'s' if len(entities.mitre_tactics) > 1 else ''}"
-            )
-
+        mitre_items = self._build_mitre_items(entities)
         if mitre_items:
-            technique_sample = (
-                entities.mitre_techniques[0] if entities.mitre_techniques else ""
-            )
+            technique_sample = entities.mitre_techniques[0] if entities.mitre_techniques else ""
             tactic_sample = entities.mitre_tactics[0] if entities.mitre_tactics else ""
             sample_text = (
                 f" (e.g., {technique_sample or tactic_sample})"
                 if (technique_sample or tactic_sample)
                 else ""
             )
-            summary_parts.append(
-                f"**MITRE ATT&CK:** {', '.join(mitre_items)}{sample_text}"
-            )
+            summary_parts.append(f"**MITRE ATT&CK:** {', '.join(mitre_items)}{sample_text}")
 
         # Suspicious files context
         if entities.suspicious_files:
             file_count = len(entities.suspicious_files)
-            file_sample = (
-                entities.suspicious_files[0] if entities.suspicious_files else ""
-            )
+            file_sample = entities.suspicious_files[0]
             summary_parts.append(
                 f"**Suspicious Files:** {file_count} file{'s' if file_count > 1 else ''} "
                 f"(e.g., {file_sample})"
@@ -168,11 +156,37 @@ class PromptBuilder:
             summary_parts.append(
                 f"**Incident Type:** {entities.incident_type.replace('_', ' ').title()}"
             )
-            summary_parts.append(
-                f"**Context Confidence:** {entities.confidence_score:.1%}"
-            )
+            summary_parts.append(f"**Context Confidence:** {entities.confidence_score:.1%}")
 
         return "\n".join(summary_parts) if summary_parts else ""
+
+    def _build_file_hash_details(self, entities: OSINTEntities) -> list:
+        """Build file hash details for context summary."""
+        hash_details = []
+        for hash_type, hashes in entities.file_hashes.items():
+            if hashes:
+                count = len(hashes)
+                sample = hashes[0][:16] + "..." if hashes[0] else ""
+                hash_details.append(
+                    f"{count} {hash_type.upper()} hash{'es' if count > 1 else ''} "
+                    f"(e.g., {sample})"
+                )
+        return hash_details
+
+    def _build_mitre_items(self, entities: OSINTEntities) -> list:
+        """Build MITRE ATT&CK items for context summary."""
+        mitre_items = []
+        if entities.mitre_techniques:
+            mitre_items.append(
+                f"{len(entities.mitre_techniques)} "
+                f"technique{'s' if len(entities.mitre_techniques) > 1 else ''}"
+            )
+        if entities.mitre_tactics:
+            mitre_items.append(
+                f"{len(entities.mitre_tactics)} "
+                f"tactic{'s' if len(entities.mitre_tactics) > 1 else ''}"
+            )
+        return mitre_items
 
     def _build_analysis_sections(
         self, classification: QueryClassification, entities: OSINTEntities
@@ -234,7 +248,8 @@ class PromptBuilder:
             if domain_count > 1:
                 guidance_parts.append(
                     f"**Domain Correlation:** With {domain_count} domains identified, "
-                    "analyze registration patterns, shared infrastructure, and campaign connections."
+                    "analyze registration patterns, shared infrastructure, "
+                    "and campaign connections."
                 )
 
         # MITRE-specific guidance
@@ -243,14 +258,15 @@ class PromptBuilder:
             if technique_count > 1:
                 guidance_parts.append(
                     f"**Attack Chain Analysis:** With {technique_count} MITRE techniques present, "
-                    "document the attack progression and observed defensive implementations for each phase."
+                    "document the attack progression and observed defensive implementations "
+                    "for each phase."
                 )
 
         # Mixed analysis guidance
         if classification.entity_focus.get("has_multiple_types"):
             guidance_parts.append(
-                "**Cross-Indicator Correlation:** Correlate findings across different indicator types "
-                "to build a comprehensive threat assessment and attack timeline."
+                "**Cross-Indicator Correlation:** Correlate findings across different "
+                "indicator types to build a comprehensive threat assessment and attack timeline."
             )
 
         return "\n".join(guidance_parts) if guidance_parts else ""

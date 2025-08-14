@@ -34,6 +34,29 @@ class ComplexityLevel(Enum):
 
 
 @dataclass
+class EntityAnalysis:
+    """Entity analysis results."""
+    focus: Dict[str, bool]
+    available: Dict[str, int]
+
+
+@dataclass
+class ResponseGuidance:
+    """Response formatting guidance."""
+    complexity: ComplexityLevel
+    format: str
+    confidence: float
+
+
+@dataclass
+class AnalysisMetadata:
+    """Analysis metadata and indicators."""
+    query_indicators: Dict[str, bool]
+    context_indicators: Dict[str, bool]
+    specialized_analysis: bool
+
+
+@dataclass
 class QueryClassification:
     """Result of query analysis with classification details."""
 
@@ -41,19 +64,51 @@ class QueryClassification:
     primary_type: QueryType
     secondary_types: List[QueryType]
 
-    # Entity analysis
-    entity_focus: Dict[str, bool]
-    available_entities: Dict[str, int]
+    # Consolidated analysis data
+    entity_analysis: EntityAnalysis
+    response_guidance: ResponseGuidance
+    metadata: AnalysisMetadata
 
-    # Response guidance
-    complexity: ComplexityLevel
-    response_format: str
-    confidence: float
+    # Legacy properties for backward compatibility
+    @property
+    def entity_focus(self) -> Dict[str, bool]:
+        """Return entity focus dictionary for backward compatibility."""
+        return self.entity_analysis.focus
 
-    # Analysis metadata
-    query_indicators: Dict[str, bool]
-    context_indicators: Dict[str, bool]
-    specialized_analysis: bool
+    @property
+    def available_entities(self) -> Dict[str, int]:
+        """Return available entities dictionary for backward compatibility."""
+        return self.entity_analysis.available
+
+    @property
+    def complexity(self) -> ComplexityLevel:
+        """Return complexity level for backward compatibility."""
+        return self.response_guidance.complexity
+
+    @property
+    def response_format(self) -> str:
+        """Return response format for backward compatibility."""
+        return self.response_guidance.format
+
+    @property
+    def confidence(self) -> float:
+        """Return confidence score for backward compatibility."""
+        return self.response_guidance.confidence
+
+    @property
+    def query_indicators(self) -> Dict[str, bool]:
+        """Return query indicators for backward compatibility."""
+        return self.metadata.query_indicators
+
+    @property
+    def context_indicators(self) -> Dict[str, bool]:
+        """Return context indicators for backward compatibility."""
+        return self.metadata.context_indicators
+
+    @property
+    def specialized_analysis(self) -> bool:
+        """Return specialized analysis flag for backward compatibility."""
+        return self.metadata.specialized_analysis
 
 
 class QueryClassifier:
@@ -109,30 +164,49 @@ class QueryClassifier:
         classification = QueryClassification(
             primary_type=primary_type,
             secondary_types=secondary_types,
-            entity_focus=context_indicators,
-            available_entities=self._count_available_entities(entities),
-            complexity=complexity,
-            response_format=response_format,
-            confidence=confidence,
-            query_indicators=query_indicators,
-            context_indicators=context_indicators,
-            specialized_analysis=self._requires_specialized_analysis(
-                primary_type, entities
+            entity_analysis=EntityAnalysis(
+                focus=context_indicators,
+                available=self._count_available_entities(entities)
             ),
+            response_guidance=ResponseGuidance(
+                complexity=complexity,
+                format=response_format,
+                confidence=confidence
+            ),
+            metadata=AnalysisMetadata(
+                query_indicators=query_indicators,
+                context_indicators=context_indicators,
+                specialized_analysis=self._requires_specialized_analysis(primary_type, entities)
+            )
         )
-
         # Log classification results
         if self.logger:
             self._log_classification_results(classification, user_query)
 
         return classification
 
+    def get_supported_query_types(self) -> List[str]:
+        """Return list of supported query types."""
+        return [query_type.value for query_type in QueryType]
+
     def _analyze_query_text(self, query: str) -> Dict[str, bool]:
         """Analyze query text for analysis type indicators."""
-
         query_lower = query.lower()
+        indicators = self._initialize_indicators()
 
-        indicators = {
+        # Check various types of indicators
+        self._check_hash_indicators(query, query_lower, indicators)
+        self._check_domain_indicators(query, query_lower, indicators)
+        self._check_ip_indicators(query, query_lower, indicators)
+        self._check_mitre_indicators(query, query_lower, indicators)
+        self._check_request_indicators(query_lower, indicators)
+        self._check_malware_indicators(query_lower, indicators)
+
+        return indicators
+
+    def _initialize_indicators(self) -> Dict[str, bool]:
+        """Initialize the indicators dictionary."""
+        return {
             "mentions_hash": False,
             "mentions_domain": False,
             "mentions_mitre": False,
@@ -145,7 +219,10 @@ class QueryClassifier:
             "requests_correlation": False,
         }
 
-        # Check for hash mentions
+    def _check_hash_indicators(
+        self, query: str, query_lower: str, indicators: Dict[str, bool]
+    ) -> None:
+        """Check for hash-related indicators in the query."""
         hash_patterns = [
             COMPILED_PATTERNS["md5_hash"],
             COMPILED_PATTERNS["sha256_hash"],
@@ -164,7 +241,10 @@ class QueryClassifier:
                 keyword in query_lower for keyword in hash_keywords
             )
 
-        # Check for domain mentions
+    def _check_domain_indicators(
+        self, query: str, query_lower: str, indicators: Dict[str, bool]
+    ) -> None:
+        """Check for domain-related indicators in the query."""
         if COMPILED_PATTERNS["domain"].search(query) or "@" in query:
             indicators["mentions_domain"] = True
         else:
@@ -173,7 +253,10 @@ class QueryClassifier:
                 keyword in query_lower for keyword in domain_keywords
             )
 
-        # Check for IP mentions
+    def _check_ip_indicators(
+        self, query: str, query_lower: str, indicators: Dict[str, bool]
+    ) -> None:
+        """Check for IP address indicators in the query."""
         if COMPILED_PATTERNS["ipv4"].search(query):
             indicators["mentions_ip"] = True
         else:
@@ -182,7 +265,10 @@ class QueryClassifier:
                 keyword in query_lower for keyword in ip_keywords
             )
 
-        # Check for MITRE mentions
+    def _check_mitre_indicators(
+        self, query: str, query_lower: str, indicators: Dict[str, bool]
+    ) -> None:
+        """Check for MITRE ATT&CK indicators in the query."""
         if COMPILED_PATTERNS["mitre_technique"].search(query):
             indicators["mentions_mitre"] = True
         else:
@@ -191,14 +277,12 @@ class QueryClassifier:
                 keyword in query_lower for keyword in mitre_keywords
             )
 
+    def _check_request_indicators(
+        self, query_lower: str, indicators: Dict[str, bool]
+    ) -> None:
+        """Check for request type indicators in the query."""
         # Check for overview/summary requests
-        overview_keywords = [
-            "overview",
-            "summary",
-            "incident",
-            "what happened",
-            "explain",
-        ]
+        overview_keywords = ["overview", "summary", "incident", "what happened", "explain"]
         indicators["requests_overview"] = any(
             keyword in query_lower for keyword in overview_keywords
         )
@@ -209,6 +293,22 @@ class QueryClassifier:
             keyword in query_lower for keyword in analysis_keywords
         )
 
+        # Check for reputation requests
+        reputation_keywords = ["reputation", "safe", "malicious", "blacklist", "whitelist"]
+        indicators["requests_reputation"] = any(
+            keyword in query_lower for keyword in reputation_keywords
+        )
+
+        # Check for correlation requests
+        correlation_keywords = ["correlate", "relate", "connect", "link", "associated"]
+        indicators["requests_correlation"] = any(
+            keyword in query_lower for keyword in correlation_keywords
+        )
+
+    def _check_malware_indicators(
+        self, query_lower: str, indicators: Dict[str, bool]
+    ) -> None:
+        """Check for malware and campaign indicators in the query."""
         # Check for malware mentions
         malware_keywords = ["malware", "virus", "trojan", "ransomware", "backdoor"]
         indicators["mentions_malware"] = any(
@@ -220,26 +320,6 @@ class QueryClassifier:
         indicators["mentions_campaign"] = any(
             keyword in query_lower for keyword in campaign_keywords
         )
-
-        # Check for reputation requests
-        reputation_keywords = [
-            "reputation",
-            "safe",
-            "malicious",
-            "blacklist",
-            "whitelist",
-        ]
-        indicators["requests_reputation"] = any(
-            keyword in query_lower for keyword in reputation_keywords
-        )
-
-        # Check for correlation requests
-        correlation_keywords = ["correlate", "relate", "connect", "link", "associated"]
-        indicators["requests_correlation"] = any(
-            keyword in query_lower for keyword in correlation_keywords
-        )
-
-        return indicators
 
     def _analyze_context_entities(self, entities: OSINTEntities) -> Dict[str, bool]:
         """Analyze available context entities to determine focus areas."""

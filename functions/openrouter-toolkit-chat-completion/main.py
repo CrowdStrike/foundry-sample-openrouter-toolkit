@@ -21,15 +21,11 @@ from query_classifier import QueryClassifier
 from prompt_builder import PromptBuilder
 
 
-# Configuration management (simplified from original)
-class Config:
-    """Configuration class for managing application settings."""
-
-    MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
-    RETRY_BASE_DELAY = float(os.getenv("RETRY_BASE_DELAY", "1.0"))
-    DEFAULT_TEMPERATURE = float(os.getenv("DEFAULT_TEMPERATURE", "0.4"))
-    MAX_PROMPT_LENGTH = int(os.getenv("MAX_PROMPT_LENGTH", "50000"))
-
+# Configuration constants
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
+RETRY_BASE_DELAY = float(os.getenv("RETRY_BASE_DELAY", "1.0"))
+DEFAULT_TEMPERATURE = float(os.getenv("DEFAULT_TEMPERATURE", "0.4"))
+MAX_PROMPT_LENGTH = int(os.getenv("MAX_PROMPT_LENGTH", "50000"))
 
 # Configure function instance
 FUNC = Function.instance()
@@ -41,7 +37,7 @@ class RequestParams:
 
     user_prompt: str
     model_name: str
-    temperature: float = Config.DEFAULT_TEMPERATURE
+    temperature: float = DEFAULT_TEMPERATURE
     online: bool = False
     provider_sort: Optional[str] = None
     context_data: Optional[Dict] = None  # New: Context data from falcon
@@ -83,10 +79,10 @@ def _validate_prompt(user_prompt: str, request_id: str, logger) -> Optional[Resp
         logger.error(f"[{request_id}] {error_msg}")
         return Response(errors=[APIError(message=error_msg)], code=400)
 
-    if len(user_prompt) > Config.MAX_PROMPT_LENGTH:
+    if len(user_prompt) > MAX_PROMPT_LENGTH:
         error_msg = (
             f"Prompt too long ({len(user_prompt)} characters). "
-            f"Maximum allowed: {Config.MAX_PROMPT_LENGTH}"
+            f"Maximum allowed: {MAX_PROMPT_LENGTH}"
         )
         logger.error(f"[{request_id}] {error_msg}")
         return Response(errors=[APIError(message=error_msg)], code=400)
@@ -96,20 +92,22 @@ def _validate_prompt(user_prompt: str, request_id: str, logger) -> Optional[Resp
 def _process_temperature(request: Request, request_id: str, logger) -> float:
     """Process and validate temperature parameter."""
     try:
-        temperature = request.body.get("temperature_input", Config.DEFAULT_TEMPERATURE)
+        temperature = request.body.get("temperature_input", DEFAULT_TEMPERATURE)
         temperature = (
             float(temperature)
             if isinstance(temperature, (int, float, str))
-            else Config.DEFAULT_TEMPERATURE
+            else DEFAULT_TEMPERATURE
         )
         temperature = round(temperature * 10) / 10
         return max(0.0, min(1.0, temperature))
     except (ValueError, TypeError):
         logger.warning(f"[{request_id}] Invalid temperature provided, using default")
-        return Config.DEFAULT_TEMPERATURE
+        return DEFAULT_TEMPERATURE
 
 
-def _process_provider_sort(request: Request, request_id: str, logger) -> tuple[Optional[str], Optional[Response]]:
+def _process_provider_sort(
+    request: Request, request_id: str, logger
+) -> tuple[Optional[str], Optional[Response]]:
     """Process and validate provider sort parameter."""
     provider_sort = request.body.get("provider_sort_input")
     if provider_sort:
@@ -210,7 +208,10 @@ def prepare_api_request(params: RequestParams, final_prompt: str) -> Dict[str, A
             {
                 "id": "web",
                 "max_results": 3,
-                "search_prompt": "Cybersecurity threat intelligence and IOC analysis:",
+                "search_prompt": (
+                    "Current cybersecurity threat intelligence, IOC analysis, "
+                    "and security research findings relevant to:"
+                ),
             }
         ]
 
@@ -357,7 +358,7 @@ def build_context_aware_prompt(params: RequestParams, logger) -> tuple[str, str]
 
         return enhanced_prompt, classification.primary_type.value
 
-    except Exception as e:
+    except (TypeError, KeyError, ValueError, json.JSONDecodeError, RuntimeError) as e:
         logger.warning(f"[{params.request_id}] Error in context analysis: {str(e)}")
         logger.debug(f"[{params.request_id}] {traceback.format_exc()}")
         # Fall back to original prompt if context analysis fails
@@ -376,13 +377,14 @@ def _make_api_call_with_retries(api, body, params, logger, max_retries):
             result = api.execute_command(body=body)
             break
 
-        except Exception as e:
+        except (ConnectionError, TimeoutError, RuntimeError, ValueError) as e:
             retry_count += 1
             if retry_count <= max_retries:
                 logger.warning(
-                    f"[{params.request_id}] API call failed, retrying ({retry_count}/{max_retries}): {str(e)}"
+                    f"[{params.request_id}] API call failed, retrying "
+                    f"({retry_count}/{max_retries}): {str(e)}"
                 )
-                delay = Config.RETRY_BASE_DELAY * (2 ** (retry_count - 1))
+                delay = RETRY_BASE_DELAY * (2 ** (retry_count - 1))
                 time.sleep(delay)
             else:
                 logger.error(
@@ -394,6 +396,63 @@ def _make_api_call_with_retries(api, body, params, logger, max_retries):
         raise RuntimeError("API call failed with no response after retries")
 
     return result
+
+
+def _log_request_info(params: RequestParams, logger):
+    """Log request processing information."""
+    request_id = params.request_id
+    context_status = "with context analysis" if params.context_data else "standard"
+    online_status = "with web search" if params.online else ""
+    provider_status = (
+        f", provider sort: {params.provider_sort}" if params.provider_sort else ""
+    )
+
+    logger.info(
+        f"[{request_id}] Processing request - Model: {params.model_name}, "
+        f"Temperature: {params.temperature} ({context_status}{online_status}{provider_status})"
+    )
+
+
+def _process_and_log_context(params: RequestParams, final_prompt: str, analysis_type: str, logger):
+    """Process and log context analysis results."""
+    if params.context_data:
+        logger.info(
+            f"[{params.request_id}] Context analysis completed - Type: {analysis_type}"
+        )
+        logger.debug(
+            f"[{params.request_id}] Enhanced prompt length: {len(final_prompt)} characters"
+        )
+
+
+def _finalize_response(
+    response_data: ResponseData, analysis_type: str, params: RequestParams,
+    start_time: float, logger
+) -> Response:
+    """Finalize and log the response."""
+    response_data.execution_time_ms = int((time.time() - start_time) * 1000)
+    response_data.analysis_type = analysis_type
+
+    # Log completion
+    context_note = f" (Context: {analysis_type})" if params.context_data else ""
+    logger.info(
+        f"[{params.request_id}] Request completed - "
+        f"Model: {response_data.model}, Tokens: {response_data.tokens}, "
+        f"Time: {response_data.execution_time_ms/1000:.2f}s{context_note}"
+    )
+
+    # Return successful response
+    return Response(
+        body={
+            "model_output_text": response_data.content,
+            "model": response_data.model,
+            "tokens": response_data.tokens,
+            "request_id": params.request_id,
+            "execution_time_ms": response_data.execution_time_ms,
+            "context_used": response_data.context_used,
+            "analysis_type": response_data.analysis_type,
+        },
+        code=200,
+    )
 
 
 @FUNC.handler(method="POST", path="/openrouter-toolkit-chat-completion")
@@ -411,72 +470,28 @@ def openrouter_toolkit_chat_completion(request: Request, _config, logger) -> Res
         if validation_error:
             return validation_error
 
-        request_id = params.request_id
-        context_status = "with context analysis" if params.context_data else "standard"
-        online_status = "with web search" if params.online else ""
-        provider_status = (
-            f", provider sort: {params.provider_sort}" if params.provider_sort else ""
-        )
-
-        logger.info(
-            f"[{request_id}] Processing request - Model: {params.model_name}, "
-            f"Temperature: {params.temperature} ({context_status}{online_status}{provider_status})"
-        )
+        # Log request info
+        _log_request_info(params, logger)
 
         # Build context-aware prompt
         final_prompt, analysis_type = build_context_aware_prompt(params, logger)
+        _process_and_log_context(params, final_prompt, analysis_type, logger)
 
-        if params.context_data:
-            logger.info(
-                f"[{request_id}] Context analysis completed - Type: {analysis_type}"
-            )
-            logger.debug(
-                f"[{request_id}] Enhanced prompt length: {len(final_prompt)} characters"
-            )
-
-        # Prepare API request with enhanced prompt
+        # Prepare and execute API request
         api = APIIntegrations()
         body = prepare_api_request(params, final_prompt)
-
-        # Make API call with retry logic
-        max_retries = Config.MAX_RETRIES
-        result = _make_api_call_with_retries(api, body, params, logger, max_retries)
+        result = _make_api_call_with_retries(api, body, params, logger, MAX_RETRIES)
 
         # Process response
-        logger.info(f"[{request_id}] Processing API response")
-        response_data, extraction_error = extract_openrouter_response(
-            result, params, logger
-        )
+        logger.info(f"[{params.request_id}] Processing API response")
+        response_data, extraction_error = extract_openrouter_response(result, params, logger)
         if extraction_error:
             return extraction_error
 
-        # Set execution time and analysis type
         assert response_data is not None
-        response_data.execution_time_ms = int((time.time() - start_time) * 1000)
-        response_data.analysis_type = analysis_type
+        return _finalize_response(response_data, analysis_type, params, start_time, logger)
 
-        # Log completion
-        context_note = f" (Context: {analysis_type})" if params.context_data else ""
-        logger.info(
-            f"[{request_id}] Request completed - Model: {response_data.model}, "
-            f"Tokens: {response_data.tokens}, Time: {response_data.execution_time_ms/1000:.2f}s{context_note}"
-        )
-
-        # Return successful response
-        return Response(
-            body={
-                "model_output_text": response_data.content,
-                "model": response_data.model,
-                "tokens": response_data.tokens,
-                "request_id": request_id,
-                "execution_time_ms": response_data.execution_time_ms,
-                "context_used": response_data.context_used,
-                "analysis_type": response_data.analysis_type,
-            },
-            code=200,
-        )
-
-    except Exception as e:
+    except (TypeError, KeyError, ValueError, json.JSONDecodeError, RuntimeError) as e:
         request_id = params.request_id
         logger.error(
             f"[{request_id}] Unhandled exception: {type(e).__name__} - {str(e)}"
