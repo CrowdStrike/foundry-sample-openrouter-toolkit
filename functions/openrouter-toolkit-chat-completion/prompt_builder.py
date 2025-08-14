@@ -13,7 +13,7 @@ from context_analyzer import OSINTEntities
 from query_classifier import QueryClassification, QueryType, ComplexityLevel, QueryClassifier
 
 
-class PromptBuilder:  # pylint: disable=too-few-public-methods
+class PromptBuilder:
     """Build context-aware prompts for OSINT security analysis."""
 
     def __init__(self):
@@ -72,7 +72,7 @@ class PromptBuilder:  # pylint: disable=too-few-public-methods
         prompt_parts.append(
             "\n=== FINAL REMINDER ===\n"
             "Provide ONLY factual intelligence analysis. "
-            "Do NOT include any recommendations, suggestions, or action items in your response."
+            "Do NOT include recommendations, suggestions, or action items."
         )
 
         # Add the user's actual query
@@ -87,7 +87,7 @@ class PromptBuilder:  # pylint: disable=too-few-public-methods
 
         return final_prompt
 
-    def _build_context_summary(self, entities: OSINTEntities) -> str:  # pylint: disable=too-many-locals
+    def _build_context_summary(self, entities: OSINTEntities) -> str:
         """Build a summary of available context entities."""
 
         summary_parts = []
@@ -382,6 +382,7 @@ def quick_build_prompt(user_query: str, entities: OSINTEntities) -> str:
     Returns:
         Basic context-aware prompt
     """
+
     # Quick classification
     classifier = QueryClassifier()
     classification = classifier.classify_query(user_query, entities)

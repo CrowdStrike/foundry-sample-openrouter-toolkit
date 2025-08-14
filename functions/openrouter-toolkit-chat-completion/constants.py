@@ -108,7 +108,7 @@ RESPONSE_FORMATS = {
     "hash_focused": """
 **Response Structure:**
 1. **Threat Assessment** - Overall risk level and confidence
-2. **Malware Analysis** - Family, behavior, and capabilities  
+2. **Malware Analysis** - Family, behavior, and capabilities
 3. **Campaign Context** - Attribution and distribution patterns
 4. **Technical Details** - File characteristics and signatures
 5. **Detection Intelligence** - Observed signatures and coverage status

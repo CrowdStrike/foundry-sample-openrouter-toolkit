@@ -2,9 +2,8 @@
 Query classifier for determining analysis approach based on query content and context entities.
 Supports intelligent classification for context-aware prompt generation.
 """
-# pylint: disable=unused-argument
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -35,7 +34,7 @@ class ComplexityLevel(Enum):
 
 
 @dataclass
-class QueryClassification:  # pylint: disable=too-many-instance-attributes
+class QueryClassification:
     """Result of query analysis with classification details."""
 
     # Primary classification
@@ -57,13 +56,12 @@ class QueryClassification:  # pylint: disable=too-many-instance-attributes
     specialized_analysis: bool
 
 
-class QueryClassifier:  # pylint: disable=too-few-public-methods
+class QueryClassifier:
     """Analyze queries and context to determine optimal analysis approach."""
 
     def __init__(self):
         self.logger = None
 
-    # pylint: disable=too-many-locals
     def classify_query(
         self, user_query: str, entities: OSINTEntities, logger=None
     ) -> QueryClassification:
@@ -260,42 +258,40 @@ class QueryClassifier:  # pylint: disable=too-few-public-methods
             "has_rich_context": entities.entity_counts.get("total_entities", 0) > 3,
         }
 
-    # pylint: disable=too-many-return-statements
-    def _determine_primary_type(
-        self,
-        query_indicators: Dict[str, bool],
-        context_indicators: Dict[str, bool],
-        entities: OSINTEntities,
-    ) -> QueryType:
-        """Determine the primary analysis type based on query and context."""
-
-        # Priority order: Direct mentions > Context availability > General analysis
-
-        # 1. Check for direct entity mentions in query
+    def _check_direct_entity_mentions(
+        self, query_indicators: Dict[str, bool], context_indicators: Dict[str, bool]
+    ) -> Optional[QueryType]:
+        """Check for direct entity mentions in query."""
         if query_indicators["mentions_hash"] and context_indicators["has_hashes"]:
             return QueryType.HASH_ANALYSIS
-
         if query_indicators["mentions_domain"] and context_indicators["has_domains"]:
             return QueryType.DOMAIN_REPUTATION
-
         if query_indicators["mentions_mitre"] and context_indicators["has_mitre"]:
             return QueryType.MITRE_TECHNIQUE
+        return None
 
-        # 2. Check for overview/correlation requests with rich context
+    def _check_overview_requests(
+        self, query_indicators: Dict[str, bool], context_indicators: Dict[str, bool]
+    ) -> Optional[QueryType]:
+        """Check for overview/correlation requests with rich context."""
         if (
             query_indicators["requests_overview"]
             or query_indicators["requests_correlation"]
         ) and context_indicators["has_rich_context"]:
             return QueryType.INCIDENT_OVERVIEW
+        return None
 
-        # 3. Determine based on strongest available context
+    def _determine_by_context_strength(
+        self, context_indicators: Dict[str, bool], entities: OSINTEntities
+    ) -> Optional[QueryType]:
+        """Determine analysis type based on context strength."""
         if (
             context_indicators["has_multiple_types"]
             and context_indicators["has_rich_context"]
         ):
             return QueryType.MIXED_ANALYSIS
 
-        # 4. Single entity type analysis
+        # Single entity type analysis
         if (
             context_indicators["has_hashes"]
             and entities.entity_counts.get("total_hashes", 0)
@@ -317,7 +313,33 @@ class QueryClassifier:  # pylint: disable=too-few-public-methods
         ):
             return QueryType.MITRE_TECHNIQUE
 
-        # 5. Default to general security analysis
+        return None
+
+    def _determine_primary_type(
+        self,
+        query_indicators: Dict[str, bool],
+        context_indicators: Dict[str, bool],
+        entities: OSINTEntities,
+    ) -> QueryType:
+        """Determine the primary analysis type based on query and context."""
+        # Priority order: Direct mentions > Context availability > General analysis
+
+        # 1. Check for direct entity mentions in query
+        result = self._check_direct_entity_mentions(query_indicators, context_indicators)
+        if result:
+            return result
+
+        # 2. Check for overview/correlation requests with rich context
+        result = self._check_overview_requests(query_indicators, context_indicators)
+        if result:
+            return result
+
+        # 3. Determine based on context strength
+        result = self._determine_by_context_strength(context_indicators, entities)
+        if result:
+            return result
+
+        # 4. Default to general security analysis
         return QueryType.GENERAL_SECURITY
 
     def _identify_secondary_types(
@@ -353,7 +375,7 @@ class QueryClassifier:  # pylint: disable=too-few-public-methods
     def _assess_complexity(
         self,
         entities: OSINTEntities,
-        primary_type: QueryType,
+        _primary_type: QueryType,
         secondary_types: List[QueryType],
     ) -> ComplexityLevel:
         """Assess the complexity level of the analysis required."""
@@ -373,7 +395,7 @@ class QueryClassifier:  # pylint: disable=too-few-public-methods
         return ComplexityLevel.LOW
 
     def _determine_response_format(
-        self, primary_type: QueryType, complexity: ComplexityLevel  # pylint: disable=unused-argument
+        self, primary_type: QueryType, _complexity: ComplexityLevel
     ) -> str:
         """Determine the appropriate response format based on analysis type and complexity."""
 
@@ -385,7 +407,6 @@ class QueryClassifier:  # pylint: disable=too-few-public-methods
             return "mitre_focused"
         if primary_type in [QueryType.INCIDENT_OVERVIEW, QueryType.MIXED_ANALYSIS]:
             return "mixed_analysis"
-
         return "general_analysis"
 
     def _calculate_confidence(
@@ -461,13 +482,10 @@ class QueryClassifier:  # pylint: disable=too-few-public-methods
             "suspicious_files": len(entities.suspicious_files),
         }
 
-    # pylint: disable=unused-argument
     def _requires_specialized_analysis(
         self, primary_type: QueryType, entities: OSINTEntities
     ) -> bool:
         """Determine if specialized analysis prompting is required."""
-        # Validate parameter usage for pylint
-        assert isinstance(primary_type, QueryType), "primary_type must be QueryType enum"
 
         if primary_type == QueryType.GENERAL_SECURITY:
             return False
