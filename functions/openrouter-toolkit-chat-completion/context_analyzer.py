@@ -14,29 +14,97 @@ from constants import (
 
 
 @dataclass
-class OSINTEntities:  # pylint: disable=too-many-instance-attributes
-    """Structured representation of OSINT-relevant entities extracted from context."""
-
-    # File indicators
-    file_hashes: Dict[str, List[str]]  # {'md5': [...], 'sha256': [...]}
+class FileIndicators:
+    """File-related indicators."""
+    hashes: Dict[str, List[str]]  # {'md5': [...], 'sha256': [...]}
     suspicious_files: List[str]
 
-    # Network indicators
+
+@dataclass
+class NetworkIndicators:
+    """Network-related indicators."""
     email_domains: List[str]
     public_ips: List[str]
 
-    # MITRE context
-    mitre_techniques: List[str]
-    mitre_tactics: List[str]
 
-    # Metadata
+@dataclass
+class MITREIndicators:
+    """MITRE ATT&CK indicators."""
+    techniques: List[str]
+    tactics: List[str]
+
+
+@dataclass
+class AnalysisMetadata:
+    """Analysis metadata and results."""
     incident_type: str
     entity_counts: Dict[str, int]
     confidence_score: float
     data_sources: List[str]
 
 
-class ContextAnalyzer:  # pylint: disable=too-few-public-methods
+@dataclass
+class OSINTEntities:
+    """Structured representation of OSINT-relevant entities extracted from context."""
+
+    file_indicators: FileIndicators
+    network_indicators: NetworkIndicators
+    mitre_indicators: MITREIndicators
+    metadata: AnalysisMetadata
+
+    # Backward compatibility properties
+    @property
+    def file_hashes(self) -> Dict[str, List[str]]:
+        """Return file hashes for backward compatibility."""
+        return self.file_indicators.hashes
+
+    @property
+    def suspicious_files(self) -> List[str]:
+        """Return suspicious files for backward compatibility."""
+        return self.file_indicators.suspicious_files
+
+    @property
+    def email_domains(self) -> List[str]:
+        """Return email domains for backward compatibility."""
+        return self.network_indicators.email_domains
+
+    @property
+    def public_ips(self) -> List[str]:
+        """Return public IPs for backward compatibility."""
+        return self.network_indicators.public_ips
+
+    @property
+    def mitre_techniques(self) -> List[str]:
+        """Return MITRE techniques for backward compatibility."""
+        return self.mitre_indicators.techniques
+
+    @property
+    def mitre_tactics(self) -> List[str]:
+        """Return MITRE tactics for backward compatibility."""
+        return self.mitre_indicators.tactics
+
+    @property
+    def incident_type(self) -> str:
+        """Return incident type for backward compatibility."""
+        return self.metadata.incident_type
+
+    @property
+    def entity_counts(self) -> Dict[str, int]:
+        """Return entity counts for backward compatibility."""
+        return self.metadata.entity_counts
+
+    @property
+    def confidence_score(self) -> float:
+        """Return confidence score for backward compatibility."""
+        return self.metadata.confidence_score
+
+    @property
+    def data_sources(self) -> List[str]:
+        """Return data sources for backward compatibility."""
+        return self.metadata.data_sources
+
+
+class ContextAnalyzer:
     """Extract and classify OSINT-relevant entities from incident context data."""
 
     def __init__(self):
@@ -67,16 +135,24 @@ class ContextAnalyzer:  # pylint: disable=too-few-public-methods
 
         # Initialize entity containers
         entities = OSINTEntities(
-            file_hashes={"md5": [], "sha256": [], "sha1": []},
-            suspicious_files=[],
-            email_domains=[],
-            public_ips=[],
-            mitre_techniques=[],
-            mitre_tactics=[],
-            incident_type="unknown",
-            entity_counts={},
-            confidence_score=0.0,
-            data_sources=[],
+            file_indicators=FileIndicators(
+                hashes={"md5": [], "sha256": [], "sha1": []},
+                suspicious_files=[]
+            ),
+            network_indicators=NetworkIndicators(
+                email_domains=[],
+                public_ips=[]
+            ),
+            mitre_indicators=MITREIndicators(
+                techniques=[],
+                tactics=[]
+            ),
+            metadata=AnalysisMetadata(
+                incident_type="unknown",
+                entity_counts={},
+                confidence_score=0.0,
+                data_sources=[]
+            )
         )
 
         # Extract entities from different data sections
@@ -87,16 +163,24 @@ class ContextAnalyzer:  # pylint: disable=too-few-public-methods
         self._extract_suspicious_files(incident_data, entities)
 
         # Classify incident and calculate metadata
-        entities.incident_type = self._classify_incident_type(entities)
-        entities.entity_counts = self._calculate_entity_counts(entities)
-        entities.confidence_score = self._calculate_confidence_score(entities)
-        entities.data_sources = self._identify_data_sources(incident_data)
+        entities.metadata.incident_type = self._classify_incident_type(entities)
+        entities.metadata.entity_counts = self._calculate_entity_counts(entities)
+        entities.metadata.confidence_score = self._calculate_confidence_score(entities)
+        entities.metadata.data_sources = self._identify_data_sources(incident_data)
 
         # Log extraction results
         if self.logger:
             self._log_extraction_results(entities)
 
         return entities
+
+    def validate_context_data(self, context_data: Union[Dict, List]) -> bool:
+        """Validate context data format for entity extraction."""
+        if not context_data:
+            return False
+        if isinstance(context_data, list):
+            return len(context_data) > 0 and isinstance(context_data[0], dict)
+        return isinstance(context_data, dict)
 
     def _extract_file_hashes(self, data: Dict, entities: OSINTEntities) -> None:
         """Extract MD5, SHA1, and SHA256 hashes from incident data."""
@@ -320,9 +404,8 @@ class ContextAnalyzer:  # pylint: disable=too-few-public-methods
 
         return False
 
-    def _classify_incident_type(self, entities: OSINTEntities) -> str:  # pylint: disable=too-many-return-statements
+    def _classify_incident_type(self, entities: OSINTEntities) -> str:
         """Classify the incident type based on available entities."""
-
         # Count entity types
         has_hashes = any(len(hashes) > 0 for hashes in entities.file_hashes.values())
         has_domains = len(entities.email_domains) > 0
@@ -335,21 +418,24 @@ class ContextAnalyzer:  # pylint: disable=too-few-public-methods
         # Determine primary incident type
         entity_types = sum([has_hashes, has_domains, has_ips, has_mitre, has_files])
 
+        # Use a mapping strategy to reduce return statements
         if entity_types == 0:
             return "unknown"
 
-        if entity_types == 1:
-            if has_hashes or has_files:
-                return "file-based"
-            if has_domains:
-                return "email-based"
-            if has_ips:
-                return "network-based"
-            if has_mitre:
-                return "technique-based"
-            return "general-security"
+        if entity_types > 1:
+            return "mixed-indicators"
 
-        return "mixed-indicators"
+        # Single entity type - use mapping
+        single_type_mapping = {
+            (True, False, False, False, False): "file-based",  # has_hashes only
+            (False, False, False, False, True): "file-based",  # has_files only
+            (False, True, False, False, False): "email-based",  # has_domains only
+            (False, False, True, False, False): "network-based",  # has_ips only
+            (False, False, False, True, False): "technique-based",  # has_mitre only
+        }
+
+        entity_tuple = (has_hashes, has_domains, has_ips, has_mitre, has_files)
+        return single_type_mapping.get(entity_tuple, "general-security")
 
     def _calculate_entity_counts(self, entities: OSINTEntities) -> Dict[str, int]:
         """Calculate entity counts for metadata."""
