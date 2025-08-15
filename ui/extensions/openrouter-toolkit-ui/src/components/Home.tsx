@@ -482,7 +482,7 @@ const Home = React.memo(({ falcon }: HomeProps) => {
             />
           </SlTabPanel>
           
-          <SlTabPanel name="response">
+          <SlTabPanel name="response" data-testid="response-tab-panel">
             <ResponseDisplay
               loading={state.loading}
               responseText={state.responseText}

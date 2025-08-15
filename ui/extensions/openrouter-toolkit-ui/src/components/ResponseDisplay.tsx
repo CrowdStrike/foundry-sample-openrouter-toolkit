@@ -30,10 +30,10 @@ const ResponseDisplay = React.memo(({
   const displayModel = getDisplayModelName(modelName, online);
 
   return (
-    <div className="h-[480px] p-3 bg-surface-base rounded-lg focus:outline-none border border-lines-light" tabIndex={-1}>
+    <div className="h-[480px] p-3 bg-surface-base rounded-lg focus:outline-none border border-lines-light" tabIndex={-1} data-testid="response-display">
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-96 gap-3 text-body-and-labels">
-          <SlSpinner />
+          <SlSpinner data-testid="spinner" />
           <p className="text-base text-center text-titles-and-attributes">
             Waiting for response from<br />{displayModel}
           </p>
@@ -51,24 +51,25 @@ const ResponseDisplay = React.memo(({
                   : "text-body-and-labels"
               }`}
               title={copyButtonText}
+              data-testid="copy-button"
             >
-              <SlIcon name={copyIconState} />
+              <SlIcon name={copyIconState} data-testid={`icon-${copyIconState}`} />
             </SlButton>
           </div>
-          <div className="flex-1 overflow-y-auto bg-transparent text-text-and-icons response-content">
-            <ReactMarkdown>
+          <div className="flex-1 overflow-y-auto bg-transparent text-text-and-icons response-content" data-testid="response-content">
+            <ReactMarkdown data-testid="markdown-content">
               {responseText}
             </ReactMarkdown>
           </div>
         </div>
       ) : errorMessage ? (
         <div className="flex flex-col items-center justify-center min-h-96 text-critical gap-3">
-          <SlIcon name="exclamation-triangle" />
+          <SlIcon name="exclamation-triangle" data-testid="icon-exclamation-triangle" />
           <p className="text-base text-center">{errorMessage}</p>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center min-h-96 text-body-and-labels gap-3">
-          <SlIcon name="chat-square-text" />
+          <SlIcon name="chat-square-text" data-testid="icon-chat-square-text" />
           <p className="text-base">Query results will appear here</p>
         </div>
       )}

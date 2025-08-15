@@ -178,6 +178,28 @@ const pollWorkflowCompletion = async (
 };
 
 /**
+ * Recursively extract string content from nested object
+ * @param obj - Object to search for string content
+ * @returns First string value found or null
+ */
+const findStringInNestedObject = (obj: any): string | null => {
+  if (typeof obj === 'string') {
+    return obj;
+  }
+  
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+    for (const value of Object.values(obj)) {
+      const result = findStringInNestedObject(value);
+      if (result) {
+        return result;
+      }
+    }
+  }
+  
+  return null;
+};
+
+/**
  * Extract content from workflow output
  * @param outputData - Workflow output data
  * @returns Extracted content string
@@ -209,8 +231,17 @@ const extractWorkflowContent = (outputData: any): string => {
         const firstValue = outputData[firstKey];
         if (typeof firstValue === 'string') {
           content = firstValue;
-        } else if (firstValue && typeof firstValue === 'object' && firstValue.content) {
-          content = firstValue.content;
+        } else if (firstValue && typeof firstValue === 'object') {
+          // First check for common content fields
+          if (firstValue.content) {
+            content = firstValue.content;
+          } else {
+            // Recursively search for any string content
+            const nestedContent = findStringInNestedObject(firstValue);
+            if (nestedContent) {
+              content = nestedContent;
+            }
+          }
         }
       }
     }

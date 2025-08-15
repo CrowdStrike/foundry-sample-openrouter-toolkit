@@ -47,9 +47,10 @@ const parseEntityValues = (entities: any): EntityValue[] => {
   } else {
     // Handle object structure
     Object.entries(entities).forEach(([key, value]) => {
-      if (value && typeof value === 'object') {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
         const entity = value as any;
-        const id = entity.id || entity.entity_id || key;
+        // Only treat as entity if it has actual ID fields, not just any key
+        const id = entity.id || entity.entity_id || entity.detection_id || entity.host_id;
         const name = entity.name || entity.hostname || entity.title;
         
         if (id) {
