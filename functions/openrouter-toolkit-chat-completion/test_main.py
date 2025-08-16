@@ -533,7 +533,7 @@ class FnTestCase(unittest.TestCase):
         
         self.assertEqual(response.code, 500)
         self.assertEqual(len(response.errors), 1)
-        self.assertIn("Error: Persistent failure", response.errors[0].message)
+        self.assertIn("API call failed after 3 retries: Persistent failure", response.errors[0].message)
         # Should be called MAX_RETRIES + 1 times
         self.assertEqual(self.mock_api.execute_command.call_count, main.Config.MAX_RETRIES + 1)
 
