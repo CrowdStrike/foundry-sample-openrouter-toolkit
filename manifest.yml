@@ -1,108 +1,115 @@
+app_id: fe726526575f4c84a24cc447e88113c2
 name: OpenRouter Toolkit
 description: OpenRouter Toolkit for chat completions
 logo: images/openrouter-logo.png
 vendor: CrowdStrike
 vendor_products: []
 use_case: Security Analysis
-manifest_version: '2023-05-09'
+manifest_version: "2023-05-09"
 ignored:
-- ui/(extensions|pages)/[^\/]*?/node_modules
-- .*/test_.*\.py
-- .*/__pycache__/test_.*
-- .*/htmlcov/test_.*
-- .*/__tests__/.*
-- .*/.*\.test\..*
+    - ui/(extensions|pages)/[^\/]*?/node_modules
+    - functions/.*/test_.*\.py
+    - functions/.*/__pycache__/test_.*
+    - functions/.*/htmlcov/test_.*
+    - ui/extensions/.*/__tests__/.*
+    - ui/extensions/.*/.*\.test\..*
 ui:
-  homepage: ''
-  extensions:
-  - name: OpenRouter Toolkit
-    description: OpenRouter Toolkit UI
-    path: ui/extensions/openrouter-toolkit-ui/dist
-    entrypoint: ui/extensions/openrouter-toolkit-ui/dist/index.html
-    sockets:
-    - ngsiem.workbench.details
-    content_security_policy:
-      connect-src:
-      - self
-      - 'data:'
-      - https://cdn.jsdelivr.net
-      - https://openrouter.ai
-      style-src:
-      - self
-      - unsafe-inline
-      - https://cdn.jsdelivr.net
-      - https://fonts.googleapis.com
-      style-src-elem:
-      - self
-      - unsafe-inline
-      - https://cdn.jsdelivr.net
-      - https://fonts.googleapis.com
-      script-src:
-      - self
-      - unsafe-inline
-      - unsafe-eval
-      - https://cdn.jsdelivr.net
-      form-action:
-      - self
-      img-src:
-      - self
-      - 'data:'
-      - https://cdn.jsdelivr.net
-      media-src:
-      - self
-      object-src:
-      - self
-    permissions: []
-    is_ui_builder: false
-  pages: {}
-  dashboards: {}
-  navigation: {}
+    homepage: ""
+    extensions:
+        - id: 4bdaddee6cbd49d085b23fbb1c7a42a3
+          name: OpenRouter Toolkit
+          description: OpenRouter Toolkit UI
+          path: ui/extensions/openrouter-toolkit-ui/dist
+          entrypoint: ui/extensions/openrouter-toolkit-ui/dist/index.html
+          sockets:
+            - ngsiem.workbench.details
+          content_security_policy:
+            connect-src:
+                - self
+                - 'data:'
+                - https://cdn.jsdelivr.net
+                - https://openrouter.ai
+            style-src:
+                - self
+                - unsafe-inline
+                - https://cdn.jsdelivr.net
+                - https://fonts.googleapis.com
+            style-src-elem:
+                - self
+                - unsafe-inline
+                - https://cdn.jsdelivr.net
+                - https://fonts.googleapis.com
+            script-src:
+                - self
+                - unsafe-inline
+                - unsafe-eval
+                - https://cdn.jsdelivr.net
+            form-action:
+                - self
+            img-src:
+                - self
+                - 'data:'
+                - https://cdn.jsdelivr.net
+            media-src:
+                - self
+            object-src:
+                - self
+          permissions: []
+          is_ui_builder: false
+    pages: {}
+    dashboards: {}
+    navigation: {}
 api_integrations:
-- name: OpenRouter API
-  description: Integration with OpenRouter
-  path: api-integrations/OpenRouter_API.json
+    - id: 1e0d918287c54bd4a7022b593e0a3248
+      name: OpenRouter API
+      description: Integration with OpenRouter
+      path: api-integrations/OpenRouter_API.json
 rtr_scripts: []
 collections: []
 auth:
-  scopes:
-  - api-integrations:read
-  - api-integrations:write
-  - incidents:write
-  - incidents:read
-  - workflow:read
-  - workflow:write
-  permissions: {}
-  roles: []
+    scopes:
+        - api-integrations:read
+        - api-integrations:write
+        - incidents:write
+        - incidents:read
+        - workflow:read
+        - workflow:write
+    permissions: {}
+    roles: []
 functions:
-- name: openrouter-toolkit-chat-completion
-  config: null
-  description: Submit requests to OpenRouter
-  path: functions/openrouter-toolkit-chat-completion
-  environment_variables: {}
-  handlers:
-  - name: OpenRouter Toolkit Chat Completion
-    description: Process requests through OpenRouter
-    method: POST
-    api_path: /openrouter-toolkit-chat-completion
-    payload_type: ''
-    request_schema: schemas/request_schema.json
-    response_schema: schemas/response_schema.json
-    workflow_integration:
-      disruptive: false
-      system_action: false
-      tags:
-      - OpenRouter Toolkit
-    permissions: []
-  language: python
-  max_exec_duration_seconds: 60
+    - id: a5ece2a22afa40af87cd9fda765aa478
+      name: openrouter-toolkit-chat-completion
+      config: null
+      description: Submit requests to OpenRouter
+      path: functions/openrouter-toolkit-chat-completion
+      environment_variables: {}
+      handlers:
+        - name: OpenRouter Toolkit Chat Completion
+          description: Process requests through OpenRouter
+          method: POST
+          api_path: /openrouter-toolkit-chat-completion
+          payload_type: ""
+          request_schema: schemas/request_schema.json
+          response_schema: schemas/response_schema.json
+          workflow_integration:
+            id: 8efd357682254322aa06f7eb8781700d
+            disruptive: false
+            system_action: false
+            tags:
+                - OpenRouter Toolkit
+          permissions: []
+      language: python
+      max_exec_duration_seconds: 60
 workflows:
-- name: OpenRouter Toolkit Query
-  path: workflows/OpenRouter_Toolkit_Query.yml
-  permissions: []
+    - id: 8025425b05464295af4f044847432dba
+      name: OpenRouter Toolkit Query
+      path: workflows/OpenRouter_Toolkit_Query.yml
+      permissions: []
 parsers: []
 logscale:
-  saved_searches: []
+    saved_searches: []
 lookup_files: []
 docs:
-  path: app_docs
-  entrypoint: README.md
+    id: fbf2359109d94ac8981817339c05d7aa
+    path: app_docs
+    entrypoint: README.md
