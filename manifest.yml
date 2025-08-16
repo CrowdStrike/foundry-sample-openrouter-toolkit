@@ -4,16 +4,16 @@ logo: images/openrouter-logo.png
 vendor: CrowdStrike
 vendor_products: []
 use_case: Security Analysis
-manifest_version: "2023-05-09"
+manifest_version: '2023-05-09'
 ignored:
-  - ui/(extensions|pages)/[^\/]*?/node_modules
-  - .*/test_.*\.py
-  - .*/__pycache__/test_.*
-  - .*/htmlcov/test_.*
-  - .*/__tests__/.*
-  - .*/.*\.test\..*
+- ui/(extensions|pages)/[^\/]*?/node_modules
+- .*/test_.*\.py
+- .*/__pycache__/test_.*
+- .*/htmlcov/test_.*
+- .*/__tests__/.*
+- .*/.*\.test\..*
 ui:
-  homepage: ""
+  homepage: ''
   extensions:
     - name: OpenRouter Toolkit
       description: OpenRouter Toolkit UI
@@ -84,7 +84,7 @@ functions:
         description: Process requests through OpenRouter
         method: POST
         api_path: /openrouter-toolkit-chat-completion
-        payload_type: ""
+        payload_type: ''
         request_schema: schemas/request_schema.json
         response_schema: schemas/response_schema.json
         workflow_integration:
