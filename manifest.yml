@@ -10,8 +10,8 @@ ignored:
 - functions/.*/test_.*\.py
 - functions/.*/__pycache__/test_.*
 - functions/.*/htmlcov/test_.*
-- ui/extensions/.*/__tests__/.*
-- ui/extensions/.*/.*\.test\..*
+- ui/(extensions|pages)/.*/__tests__/.*
+- ui/(extensions|pages)/.*/.*\.test\..*
 ui:
   homepage: ''
   extensions:
