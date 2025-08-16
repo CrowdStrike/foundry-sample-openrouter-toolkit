@@ -17,7 +17,7 @@ def mock_handler(*_args, **_kwargs):
     return identity
 
 
-class MockContextAnalyzer:
+class MockContextAnalyzer:  # pylint: disable=too-few-public-methods
     """Mock ContextAnalyzer for testing."""
 
     def extract_entities(self, _context_data, _logger):
@@ -27,7 +27,7 @@ class MockContextAnalyzer:
         return mock_entities
 
 
-class MockQueryClassifier:
+class MockQueryClassifier:  # pylint: disable=too-few-public-methods
     """Mock QueryClassifier for testing."""
 
     def classify_query(self, _user_prompt, _entities, _logger):
@@ -37,7 +37,7 @@ class MockQueryClassifier:
         return mock_classification
 
 
-class MockPromptBuilder:
+class MockPromptBuilder:  # pylint: disable=too-few-public-methods
     """Mock PromptBuilder for testing."""
 
     def build_prompt(self, user_prompt, _entities, _classification, _logger):
@@ -50,19 +50,19 @@ patcher = patch("crowdstrike.foundry.function.Function.handler", new=mock_handle
 patcher.start()
 
 # Now import main with the mocked handler
-import main
+import main  # pylint: disable=wrong-import-position
 
 # Stop the patcher after import
 patcher.stop()
 
 
-class FnTestCase(unittest.TestCase):
+class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
     """Test case class for OpenRouter Toolkit Chat Completion function handler tests."""
 
     def setUp(self):
         """Set up test fixtures before each test method."""
         # Mock time.time for consistent request_id generation
-        self.time_patcher = patch("main.time.time", return_value=1234567890.123)
+        self.time_patcher = patch("main.time.time", return_value=time.time() - 1000)
         self.addCleanup(self.time_patcher.stop)
         self.mock_time = self.time_patcher.start()
 
