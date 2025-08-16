@@ -166,7 +166,7 @@ class FnTestCase(unittest.TestCase):
     def test_prompt_too_long(self):
         """Test request with prompt exceeding MAX_PROMPT_LENGTH returns 400 error."""
         request = Request()
-        long_prompt = "x" * (main.Config.MAX_PROMPT_LENGTH + 1)
+        long_prompt = "x" * (main.MAX_PROMPT_LENGTH + 1)
         request.body = {
             "user_prompt_input": long_prompt,
             "model_name_input": "test-model"
@@ -266,7 +266,7 @@ class FnTestCase(unittest.TestCase):
                 call_args = self.mock_api.execute_command.call_args
                 api_body = call_args[1]["body"]
                 actual_temp = api_body["resources"][0]["request"]["json"]["temperature"]
-                self.assertEqual(actual_temp, main.Config.DEFAULT_TEMPERATURE)
+                self.assertEqual(actual_temp, main.DEFAULT_TEMPERATURE)
 
     def test_online_parameter_processing(self):
         """Test online parameter processing with various input types."""
@@ -504,8 +504,8 @@ class FnTestCase(unittest.TestCase):
 
         # Mock API to fail twice, then succeed
         self.mock_api.execute_command.side_effect = [
-            Exception("Network error"),
-            Exception("Timeout error"),
+            RuntimeError("Network error"),
+            RuntimeError("Timeout error"),
             self._create_mock_api_response(content="Success after retries")
         ]
         
@@ -526,7 +526,7 @@ class FnTestCase(unittest.TestCase):
         }
 
         # Mock API to always fail
-        self.mock_api.execute_command.side_effect = Exception("Persistent failure")
+        self.mock_api.execute_command.side_effect = RuntimeError("Persistent failure")
         
         with patch("main.time.sleep"):  # Mock sleep to speed up test
             response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
@@ -535,7 +535,7 @@ class FnTestCase(unittest.TestCase):
         self.assertEqual(len(response.errors), 1)
         self.assertIn("Error: Persistent failure", response.errors[0].message)
         # Should be called MAX_RETRIES + 1 times
-        self.assertEqual(self.mock_api.execute_command.call_count, main.Config.MAX_RETRIES + 1)
+        self.assertEqual(self.mock_api.execute_command.call_count, main.MAX_RETRIES + 1)
 
     def test_context_analysis_exception_fallback(self):
         """Test that context analysis exceptions fall back to original prompt."""
@@ -551,7 +551,7 @@ class FnTestCase(unittest.TestCase):
         
         # Mock context analyzer to raise exception
         with patch("main.ContextAnalyzer") as mock_analyzer:
-            mock_analyzer.return_value.extract_entities.side_effect = Exception("Analysis failed")
+            mock_analyzer.return_value.extract_entities.side_effect = RuntimeError("Analysis failed")
             
             self.mock_api.execute_command.return_value = self._create_mock_api_response()
             
