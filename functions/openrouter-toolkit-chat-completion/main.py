@@ -360,7 +360,7 @@ def build_context_aware_prompt(params: RequestParams, logger) -> tuple[str, str]
 
         return enhanced_prompt, classification.primary_type.value
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         logger.warning(f"[{params.request_id}] Error in context analysis: {str(e)}")
         logger.debug(f"[{params.request_id}] {traceback.format_exc()}")
         # Fall back to original prompt if context analysis fails
@@ -379,7 +379,7 @@ def _make_api_call_with_retries(api, body, params, logger, max_retries):
             result = api.execute_command(body=body)
             break
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             retry_count += 1
             if retry_count <= max_retries:
                 logger.warning(
@@ -393,7 +393,9 @@ def _make_api_call_with_retries(api, body, params, logger, max_retries):
                     f"[{params.request_id}] API call failed after {max_retries} retries: {str(e)}"
                 )
                 # Don't re-raise, return error response instead
-                raise RuntimeError(f"API call failed after {max_retries} retries: {str(e)}")
+                raise RuntimeError(
+                    f"API call failed after {max_retries} retries: {str(e)}"
+                ) from e
 
     if result is None:
         raise RuntimeError("API call failed with no response after retries")
