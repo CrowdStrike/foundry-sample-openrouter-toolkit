@@ -15,90 +15,90 @@ ignored:
 ui:
   homepage: ''
   extensions:
-    - name: OpenRouter Toolkit
-      description: OpenRouter Toolkit UI
-      path: ui/extensions/openrouter-toolkit-ui/dist
-      entrypoint: ui/extensions/openrouter-toolkit-ui/dist/index.html
-      sockets:
-        - ngsiem.workbench.details
-      content_security_policy:
-        connect-src:
-          - self
-          - 'data:'
-          - https://cdn.jsdelivr.net
-          - https://openrouter.ai
-        style-src:
-          - self
-          - unsafe-inline
-          - https://cdn.jsdelivr.net
-          - https://fonts.googleapis.com
-        style-src-elem:
-          - self
-          - unsafe-inline
-          - https://cdn.jsdelivr.net
-          - https://fonts.googleapis.com
-        script-src:
-          - self
-          - unsafe-inline
-          - unsafe-eval
-          - https://cdn.jsdelivr.net
-        form-action:
-          - self
-        img-src:
-          - self
-          - 'data:'
-          - https://cdn.jsdelivr.net
-        media-src:
-          - self
-        object-src:
-          - self
-      permissions: []
-      is_ui_builder: false
+  - name: OpenRouter Toolkit
+    description: OpenRouter Toolkit UI
+    path: ui/extensions/openrouter-toolkit-ui/dist
+    entrypoint: ui/extensions/openrouter-toolkit-ui/dist/index.html
+    sockets:
+    - ngsiem.workbench.details
+    content_security_policy:
+      connect-src:
+      - self
+      - 'data:'
+      - https://cdn.jsdelivr.net
+      - https://openrouter.ai
+      style-src:
+      - self
+      - unsafe-inline
+      - https://cdn.jsdelivr.net
+      - https://fonts.googleapis.com
+      style-src-elem:
+      - self
+      - unsafe-inline
+      - https://cdn.jsdelivr.net
+      - https://fonts.googleapis.com
+      script-src:
+      - self
+      - unsafe-inline
+      - unsafe-eval
+      - https://cdn.jsdelivr.net
+      form-action:
+      - self
+      img-src:
+      - self
+      - 'data:'
+      - https://cdn.jsdelivr.net
+      media-src:
+      - self
+      object-src:
+      - self
+    permissions: []
+    is_ui_builder: false
   pages: {}
   dashboards: {}
   navigation: {}
 api_integrations:
-  - name: OpenRouter API
-    description: Integration with OpenRouter
-    path: api-integrations/OpenRouter_API.json
+- name: OpenRouter API
+  description: Integration with OpenRouter
+  path: api-integrations/OpenRouter_API.json
 rtr_scripts: []
 collections: []
 auth:
   scopes:
-    - api-integrations:read
-    - api-integrations:write
-    - incidents:write
-    - incidents:read
-    - workflow:read
-    - workflow:write
+  - api-integrations:read
+  - api-integrations:write
+  - incidents:write
+  - incidents:read
+  - workflow:read
+  - workflow:write
   permissions: {}
   roles: []
 functions:
-  - name: openrouter-toolkit-chat-completion
-    config: null
-    description: Submit requests to OpenRouter
-    path: functions/openrouter-toolkit-chat-completion
-    environment_variables: {}
-    handlers:
-      - name: OpenRouter Toolkit Chat Completion
-        description: Process requests through OpenRouter
-        method: POST
-        api_path: /openrouter-toolkit-chat-completion
-        payload_type: ''
-        request_schema: schemas/request_schema.json
-        response_schema: schemas/response_schema.json
-        workflow_integration:
-          disruptive: false
-          system_action: false
-          tags:
-            - OpenRouter Toolkit
-        permissions: []
-    language: python
-    max_exec_duration_seconds: 60
-workflows:
-  - name: OpenRouter Toolkit Query
-    path: workflows/OpenRouter_Toolkit_Query.yml
+- name: openrouter-toolkit-chat-completion
+  config: null
+  description: Submit requests to OpenRouter
+  path: functions/openrouter-toolkit-chat-completion
+  environment_variables: {}
+  handlers:
+  - name: OpenRouter Toolkit Chat Completion
+    description: Process requests through OpenRouter
+    method: POST
+    api_path: /openrouter-toolkit-chat-completion
+    payload_type: ''
+    request_schema: schemas/request_schema.json
+    response_schema: schemas/response_schema.json
+    workflow_integration:
+      disruptive: false
+      system_action: false
+      tags:
+      - OpenRouter Toolkit
     permissions: []
+  language: python
+  max_exec_duration_seconds: 60
+workflows:
+- name: OpenRouter Toolkit Query
+  path: workflows/OpenRouter_Toolkit_Query.yml
+  permissions: []
 parsers: []
 logscale:
   saved_searches: []
