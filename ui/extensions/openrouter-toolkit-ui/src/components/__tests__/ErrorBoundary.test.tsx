@@ -13,10 +13,8 @@ const ThrowError = ({ shouldThrow = false }: { shouldThrow?: boolean }) => {
 
 // Mock window.location.reload
 const mockReload = jest.fn();
-Object.defineProperty(window, 'location', {
-  value: { reload: mockReload },
-  writable: true,
-});
+delete (window as any).location;
+(window as any).location = { reload: mockReload };
 
 // Mock console.error to avoid noise in tests
 const originalConsoleError = console.error;

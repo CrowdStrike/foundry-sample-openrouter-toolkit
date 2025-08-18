@@ -14,6 +14,12 @@ updates:
         patterns:
           - "react"
           - "react-dom"
+      jest:
+        patterns:
+          - "jest"
+          - "jest-environment-jsdom"
+          - "@types/jest"
+          - "ts-jest"
   - package-ecosystem: github-actions
     directory: "/"
     schedule:

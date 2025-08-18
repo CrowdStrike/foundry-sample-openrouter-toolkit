@@ -378,24 +378,17 @@ describe('helpers', () => {
     it('should return true when window.__DEV__ is set', () => {
       delete (globalThis as any).__DEV__;
       
-      // Mock window object with __DEV__ property
-      Object.defineProperty(globalThis, 'window', {
-        value: { __DEV__: true },
-        writable: true,
-        configurable: true
-      });
+      // In jsdom environment, window is already defined, so we modify it directly
+      const originalWindowDev = (window as any).__DEV__;
+      (window as any).__DEV__ = true;
       
       expect(isDevelopment()).toBe(true);
       
       // Clean up
-      if (originalWindow) {
-        Object.defineProperty(globalThis, 'window', {
-          value: originalWindow,
-          writable: true,
-          configurable: true
-        });
+      if (originalWindowDev !== undefined) {
+        (window as any).__DEV__ = originalWindowDev;
       } else {
-        delete (globalThis as any).window;
+        delete (window as any).__DEV__;
       }
     });
 
