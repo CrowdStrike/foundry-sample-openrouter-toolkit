@@ -7,6 +7,11 @@ use_case: Security Analysis
 manifest_version: '2023-05-09'
 ignored:
 - ui/(extensions|pages)/[^\/]*?/node_modules
+- functions/.*/test_.*\.py
+- functions/.*/__pycache__/test_.*
+- functions/.*/htmlcov/test_.*
+- ui/(extensions|pages)/.*/__tests__/.*
+- ui/(extensions|pages)/.*/.*\.test\..*
 ui:
   homepage: ''
   extensions:
