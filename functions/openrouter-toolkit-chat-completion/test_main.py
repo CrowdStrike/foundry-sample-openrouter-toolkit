@@ -5,7 +5,7 @@ import time
 import unittest
 from unittest.mock import patch, MagicMock, Mock
 
-from crowdstrike.foundry.function import Request, APIError
+from crowdstrike.foundry.function import Request
 
 
 def mock_handler(*_args, **_kwargs):
@@ -17,30 +17,30 @@ def mock_handler(*_args, **_kwargs):
     return identity
 
 
-class MockContextAnalyzer:
+class MockContextAnalyzer:  # pylint: disable=too-few-public-methods
     """Mock ContextAnalyzer for testing."""
-    
-    def extract_entities(self, context_data, logger):
+
+    def extract_entities(self, _context_data, _logger):
         """Mock entity extraction."""
         mock_entities = Mock()
         mock_entities.entity_counts = {"total_entities": 5}
         return mock_entities
 
 
-class MockQueryClassifier:
+class MockQueryClassifier:  # pylint: disable=too-few-public-methods
     """Mock QueryClassifier for testing."""
-    
-    def classify_query(self, user_prompt, entities, logger):
+
+    def classify_query(self, _user_prompt, _entities, _logger):
         """Mock query classification."""
         mock_classification = Mock()
         mock_classification.primary_type.value = "threat_analysis"
         return mock_classification
 
 
-class MockPromptBuilder:
+class MockPromptBuilder:  # pylint: disable=too-few-public-methods
     """Mock PromptBuilder for testing."""
-    
-    def build_prompt(self, user_prompt, entities, classification, logger):
+
+    def build_prompt(self, user_prompt, _entities, _classification, _logger):
         """Mock prompt building."""
         return f"Enhanced: {user_prompt}"
 
@@ -50,19 +50,19 @@ patcher = patch("crowdstrike.foundry.function.Function.handler", new=mock_handle
 patcher.start()
 
 # Now import main with the mocked handler
-import main
+import main  # pylint: disable=wrong-import-position
 
 # Stop the patcher after import
 patcher.stop()
 
 
-class FnTestCase(unittest.TestCase):
+class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
     """Test case class for OpenRouter Toolkit Chat Completion function handler tests."""
 
     def setUp(self):
         """Set up test fixtures before each test method."""
         # Mock time.time for consistent request_id generation
-        self.time_patcher = patch("main.time.time", return_value=1234567890.123)
+        self.time_patcher = patch("main.time.time", return_value=time.time() - 1000)
         self.addCleanup(self.time_patcher.stop)
         self.mock_time = self.time_patcher.start()
 
@@ -118,7 +118,7 @@ class FnTestCase(unittest.TestCase):
         }
 
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 400)
         self.assertEqual(len(response.errors), 1)
         self.assertIn("user_prompt_input", response.errors[0].message)
@@ -131,7 +131,7 @@ class FnTestCase(unittest.TestCase):
         }
 
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 400)
         self.assertEqual(len(response.errors), 1)
         self.assertIn("model_name_input", response.errors[0].message)
@@ -142,7 +142,7 @@ class FnTestCase(unittest.TestCase):
         request.body = {}
 
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 400)
         self.assertEqual(len(response.errors), 1)
         error_msg = response.errors[0].message
@@ -158,7 +158,7 @@ class FnTestCase(unittest.TestCase):
         }
 
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 400)
         self.assertEqual(len(response.errors), 1)
         self.assertEqual(response.errors[0].message, "User prompt cannot be empty")
@@ -173,7 +173,7 @@ class FnTestCase(unittest.TestCase):
         }
 
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 400)
         self.assertEqual(len(response.errors), 1)
         self.assertIn("Prompt too long", response.errors[0].message)
@@ -188,7 +188,7 @@ class FnTestCase(unittest.TestCase):
         }
 
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 400)
         self.assertEqual(len(response.errors), 1)
         self.assertIn("Invalid provider sort option", response.errors[0].message)
@@ -196,7 +196,7 @@ class FnTestCase(unittest.TestCase):
     def test_valid_provider_sort_options(self):
         """Test that valid provider sort options are accepted."""
         valid_options = ["price", "throughput", "latency"]
-        
+
         for option in valid_options:
             with self.subTest(provider_sort=option):
                 request = Request()
@@ -207,9 +207,9 @@ class FnTestCase(unittest.TestCase):
                 }
 
                 self.mock_api.execute_command.return_value = self._create_mock_api_response()
-                
+
                 response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-                
+
                 # Should not return validation error
                 self.assertEqual(response.code, 200)
 
@@ -234,9 +234,9 @@ class FnTestCase(unittest.TestCase):
                 }
 
                 self.mock_api.execute_command.return_value = self._create_mock_api_response()
-                
+
                 response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-                
+
                 self.assertEqual(response.code, 200)
                 # Verify API was called with correct temperature
                 call_args = self.mock_api.execute_command.call_args
@@ -258,9 +258,9 @@ class FnTestCase(unittest.TestCase):
                 }
 
                 self.mock_api.execute_command.return_value = self._create_mock_api_response()
-                
+
                 response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-                
+
                 self.assertEqual(response.code, 200)
                 # Should use default temperature
                 call_args = self.mock_api.execute_command.call_args
@@ -296,15 +296,15 @@ class FnTestCase(unittest.TestCase):
                 }
 
                 self.mock_api.execute_command.return_value = self._create_mock_api_response()
-                
+
                 response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-                
+
                 self.assertEqual(response.code, 200)
                 # Check if plugins were added for online requests
                 call_args = self.mock_api.execute_command.call_args
                 api_body = call_args[1]["body"]
                 request_json = api_body["resources"][0]["request"]["json"]
-                
+
                 if expected_online:
                     self.assertIn("plugins", request_json)
                     self.assertEqual(len(request_json["plugins"]), 1)
@@ -327,9 +327,9 @@ class FnTestCase(unittest.TestCase):
         }
 
         self.mock_api.execute_command.return_value = self._create_mock_api_response()
-        
+
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 200)
         self.assertTrue(response.body["context_used"])
         self.assertEqual(response.body["analysis_type"], "threat_analysis")
@@ -347,9 +347,9 @@ class FnTestCase(unittest.TestCase):
         }
 
         self.mock_api.execute_command.return_value = self._create_mock_api_response()
-        
+
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 200)
         self.assertTrue(response.body["context_used"])
 
@@ -363,9 +363,9 @@ class FnTestCase(unittest.TestCase):
         }
 
         self.mock_api.execute_command.return_value = self._create_mock_api_response()
-        
+
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 200)
         self.assertFalse(response.body["context_used"])
         self.assertEqual(response.body["analysis_type"], "general")
@@ -383,9 +383,9 @@ class FnTestCase(unittest.TestCase):
             model="test-model",
             tokens=150
         )
-        
+
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 200)
         self.assertEqual(response.body["model_output_text"], "Hello! This is a test response.")
         self.assertEqual(response.body["model"], "test-model")
@@ -412,9 +412,9 @@ class FnTestCase(unittest.TestCase):
             model="gpt-4",
             tokens=500
         )
-        
+
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 200)
         self.assertEqual(response.body["model_output_text"], "Detailed threat analysis result")
         self.assertEqual(response.body["model"], "gpt-4")
@@ -426,7 +426,7 @@ class FnTestCase(unittest.TestCase):
         call_args = self.mock_api.execute_command.call_args
         api_body = call_args[1]["body"]
         request_json = api_body["resources"][0]["request"]["json"]
-        
+
         self.assertEqual(request_json["temperature"], 0.7)
         self.assertIn("plugins", request_json)
         self.assertEqual(request_json["provider"]["sort"], "latency")
@@ -441,9 +441,9 @@ class FnTestCase(unittest.TestCase):
 
         # Mock API response without body
         self.mock_api.execute_command.return_value = {}
-        
+
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 500)
         self.assertEqual(len(response.errors), 1)
         self.assertIn("Error parsing OpenRouter response", response.errors[0].message)
@@ -458,9 +458,9 @@ class FnTestCase(unittest.TestCase):
 
         # Mock API response without resources
         self.mock_api.execute_command.return_value = {"body": {}}
-        
+
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 500)
         self.assertEqual(len(response.errors), 1)
         self.assertIn("Error parsing OpenRouter response", response.errors[0].message)
@@ -479,7 +479,7 @@ class FnTestCase(unittest.TestCase):
             "model": "test-model",
             "usage": {"total_tokens": 200}
         })
-        
+
         self.mock_api.execute_command.return_value = {
             "body": {
                 "resources": [
@@ -487,9 +487,9 @@ class FnTestCase(unittest.TestCase):
                 ]
             }
         }
-        
+
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 200)
         self.assertEqual(response.body["model_output_text"], "Parsed response")
         self.assertEqual(response.body["tokens"], 200)
@@ -508,10 +508,10 @@ class FnTestCase(unittest.TestCase):
             Exception("Timeout error"),
             self._create_mock_api_response(content="Success after retries")
         ]
-        
+
         with patch("main.time.sleep"):  # Mock sleep to speed up test
             response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 200)
         self.assertEqual(response.body["model_output_text"], "Success after retries")
         # Verify it was called 3 times (2 failures + 1 success)
@@ -527,13 +527,13 @@ class FnTestCase(unittest.TestCase):
 
         # Mock API to always fail
         self.mock_api.execute_command.side_effect = Exception("Persistent failure")
-        
+
         with patch("main.time.sleep"):  # Mock sleep to speed up test
             response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 500)
         self.assertEqual(len(response.errors), 1)
-        self.assertIn("Error: Persistent failure", response.errors[0].message)
+        self.assertIn("API call failed after 3 retries: Persistent failure", response.errors[0].message)
         # Should be called MAX_RETRIES + 1 times
         self.assertEqual(self.mock_api.execute_command.call_count, main.Config.MAX_RETRIES + 1)
 
@@ -548,18 +548,18 @@ class FnTestCase(unittest.TestCase):
 
         # Stop the existing context analyzer patch temporarily
         self.context_analyzer_patcher.stop()
-        
+
         # Mock context analyzer to raise exception
         with patch("main.ContextAnalyzer") as mock_analyzer:
             mock_analyzer.return_value.extract_entities.side_effect = Exception("Analysis failed")
-            
+
             self.mock_api.execute_command.return_value = self._create_mock_api_response()
-            
+
             response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         # Restart the original patch for other tests
         self.context_analyzer_patcher.start()
-        
+
         self.assertEqual(response.code, 200)
         # context_used is True because context data was provided, even if analysis failed
         self.assertTrue(response.body["context_used"])
@@ -575,9 +575,9 @@ class FnTestCase(unittest.TestCase):
         }
 
         self.mock_api.execute_command.return_value = self._create_mock_api_response()
-        
+
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 200)
         self.assertIn("request_id", response.body)
         # Should be in format req-{timestamp}
@@ -592,9 +592,9 @@ class FnTestCase(unittest.TestCase):
         }
 
         self.mock_api.execute_command.return_value = self._create_mock_api_response()
-        
+
         response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-        
+
         self.assertEqual(response.code, 200)
         self.assertIn("execution_time_ms", response.body)
         self.assertIsInstance(response.body["execution_time_ms"], int)

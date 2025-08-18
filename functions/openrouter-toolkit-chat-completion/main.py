@@ -21,11 +21,13 @@ from query_classifier import QueryClassifier
 from prompt_builder import PromptBuilder
 
 
-# Configuration constants
-MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
-RETRY_BASE_DELAY = float(os.getenv("RETRY_BASE_DELAY", "1.0"))
-DEFAULT_TEMPERATURE = float(os.getenv("DEFAULT_TEMPERATURE", "0.4"))
-MAX_PROMPT_LENGTH = int(os.getenv("MAX_PROMPT_LENGTH", "50000"))
+@dataclass
+class Config:
+    """Configuration constants."""
+    MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
+    RETRY_BASE_DELAY = float(os.getenv("RETRY_BASE_DELAY", "1.0"))
+    DEFAULT_TEMPERATURE = float(os.getenv("DEFAULT_TEMPERATURE", "0.4"))
+    MAX_PROMPT_LENGTH = int(os.getenv("MAX_PROMPT_LENGTH", "50000"))
 
 # Configure function instance
 FUNC = Function.instance()
@@ -37,7 +39,7 @@ class RequestParams:
 
     user_prompt: str
     model_name: str
-    temperature: float = DEFAULT_TEMPERATURE
+    temperature: float = Config.DEFAULT_TEMPERATURE
     online: bool = False
     provider_sort: Optional[str] = None
     context_data: Optional[Dict] = None  # New: Context data from falcon
@@ -79,10 +81,10 @@ def _validate_prompt(user_prompt: str, request_id: str, logger) -> Optional[Resp
         logger.error(f"[{request_id}] {error_msg}")
         return Response(errors=[APIError(message=error_msg)], code=400)
 
-    if len(user_prompt) > MAX_PROMPT_LENGTH:
+    if len(user_prompt) > Config.MAX_PROMPT_LENGTH:
         error_msg = (
             f"Prompt too long ({len(user_prompt)} characters). "
-            f"Maximum allowed: {MAX_PROMPT_LENGTH}"
+            f"Maximum allowed: {Config.MAX_PROMPT_LENGTH}"
         )
         logger.error(f"[{request_id}] {error_msg}")
         return Response(errors=[APIError(message=error_msg)], code=400)
@@ -92,17 +94,17 @@ def _validate_prompt(user_prompt: str, request_id: str, logger) -> Optional[Resp
 def _process_temperature(request: Request, request_id: str, logger) -> float:
     """Process and validate temperature parameter."""
     try:
-        temperature = request.body.get("temperature_input", DEFAULT_TEMPERATURE)
+        temperature = request.body.get("temperature_input", Config.DEFAULT_TEMPERATURE)
         temperature = (
             float(temperature)
             if isinstance(temperature, (int, float, str))
-            else DEFAULT_TEMPERATURE
+            else Config.DEFAULT_TEMPERATURE
         )
         temperature = round(temperature * 10) / 10
         return max(0.0, min(1.0, temperature))
     except (ValueError, TypeError):
         logger.warning(f"[{request_id}] Invalid temperature provided, using default")
-        return DEFAULT_TEMPERATURE
+        return Config.DEFAULT_TEMPERATURE
 
 
 def _process_provider_sort(
@@ -358,7 +360,7 @@ def build_context_aware_prompt(params: RequestParams, logger) -> tuple[str, str]
 
         return enhanced_prompt, classification.primary_type.value
 
-    except (TypeError, KeyError, ValueError, json.JSONDecodeError, RuntimeError) as e:
+    except Exception as e:  # pylint: disable=broad-except
         logger.warning(f"[{params.request_id}] Error in context analysis: {str(e)}")
         logger.debug(f"[{params.request_id}] {traceback.format_exc()}")
         # Fall back to original prompt if context analysis fails
@@ -377,20 +379,23 @@ def _make_api_call_with_retries(api, body, params, logger, max_retries):
             result = api.execute_command(body=body)
             break
 
-        except (ConnectionError, TimeoutError, RuntimeError, ValueError) as e:
+        except Exception as e:  # pylint: disable=broad-except
             retry_count += 1
             if retry_count <= max_retries:
                 logger.warning(
                     f"[{params.request_id}] API call failed, retrying "
                     f"({retry_count}/{max_retries}): {str(e)}"
                 )
-                delay = RETRY_BASE_DELAY * (2 ** (retry_count - 1))
+                delay = Config.RETRY_BASE_DELAY * (2 ** (retry_count - 1))
                 time.sleep(delay)
             else:
                 logger.error(
                     f"[{params.request_id}] API call failed after {max_retries} retries: {str(e)}"
                 )
-                raise
+                # Don't re-raise, return error response instead
+                raise RuntimeError(
+                    f"API call failed after {max_retries} retries: {str(e)}"
+                ) from e
 
     if result is None:
         raise RuntimeError("API call failed with no response after retries")
@@ -480,7 +485,7 @@ def openrouter_toolkit_chat_completion(request: Request, _config, logger) -> Res
         # Prepare and execute API request
         api = APIIntegrations()
         body = prepare_api_request(params, final_prompt)
-        result = _make_api_call_with_retries(api, body, params, logger, MAX_RETRIES)
+        result = _make_api_call_with_retries(api, body, params, logger, Config.MAX_RETRIES)
 
         # Process response
         logger.info(f"[{params.request_id}] Processing API response")
