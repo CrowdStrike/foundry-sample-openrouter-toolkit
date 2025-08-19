@@ -12,26 +12,28 @@ export function useFalconApi() {
   
   const falcon = useMemo(() => new FalconApi(), []);
 
-  useEffect(() => {
-    async function initializeFalcon() {
-      try {
-        await falcon.connect();
-        setIsInitialized(true);
-        setError(null);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to initialize Falcon API';
-        console.error("Failed to initialize Falcon API:", err);
-        setError(errorMessage);
-        setIsInitialized(false);
-      }
+  const initializeFalcon = async () => {
+    try {
+      setError(null);
+      setIsInitialized(false);
+      await falcon.connect();
+      setIsInitialized(true);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to initialize Falcon API';
+      console.error("Failed to initialize Falcon API:", err);
+      setError(errorMessage);
+      setIsInitialized(false);
     }
-    
+  };
+
+  useEffect(() => {
     initializeFalcon();
   }, [falcon]);
 
   return { 
     falcon, 
     isInitialized,
-    error 
+    error,
+    retry: initializeFalcon
   };
 }

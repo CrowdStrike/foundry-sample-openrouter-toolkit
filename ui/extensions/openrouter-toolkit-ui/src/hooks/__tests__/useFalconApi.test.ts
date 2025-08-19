@@ -211,7 +211,8 @@ describe('useFalconApi', () => {
       expect(result.current).toHaveProperty('falcon');
       expect(result.current).toHaveProperty('isInitialized');
       expect(result.current).toHaveProperty('error');
-      expect(Object.keys(result.current)).toHaveLength(3);
+      expect(result.current).toHaveProperty('retry');
+      expect(Object.keys(result.current)).toHaveLength(4);
     });
 
     it('should return stable reference for falcon instance across renders', () => {

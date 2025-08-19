@@ -9,7 +9,7 @@ import Home from "./Home";
  * Main App component with error boundary
  */
 function App(): React.ReactNode {
-  const { isInitialized, falcon, error } = useFalconApi();
+  const { isInitialized, falcon, error, retry } = useFalconApi();
   
   // Show error state if Falcon API failed to initialize
   if (error) {
@@ -22,7 +22,7 @@ function App(): React.ReactNode {
           Unable to connect to the Falcon API: {error}
         </p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={retry}
           className="error-button px-4 py-2 rounded hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
         >
           Retry
