@@ -29,6 +29,7 @@ afterAll(() => {
 describe('ErrorBoundary', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockReload.mockClear();
   });
 
   describe('Normal Operation', () => {
@@ -175,7 +176,10 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
+      expect(screen.getByText('Something went wrong')).toBeInTheDocument();
       const refreshButton = screen.getByText('Refresh Page');
+      expect(refreshButton).toBeInTheDocument();
+      
       fireEvent.click(refreshButton);
 
       expect(mockReload).toHaveBeenCalled();

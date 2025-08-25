@@ -34,6 +34,7 @@ jest.mock('../Home', () => {
 });
 
 describe('App', () => {
+  const mockRetry = jest.fn();
   const defaultMockReturn = {
     falcon: {
       connect: jest.fn(),
@@ -48,10 +49,12 @@ describe('App', () => {
     } as any,
     isInitialized: true,
     error: null,
+    retry: mockRetry,
   } as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRetry.mockClear();
     mockUseFalconApi.mockReturnValue(defaultMockReturn);
   });
 
@@ -75,7 +78,7 @@ describe('App', () => {
   });
 
   describe('Error Handling', () => {
-    it.skip('should render when falcon has an error', () => {
+    it('should render error state when falcon has an error', () => {
       mockUseFalconApi.mockReturnValue({
         ...defaultMockReturn,
         isInitialized: false,
@@ -84,11 +87,13 @@ describe('App', () => {
       
       render(<App />);
       
-      expect(screen.getByTestId('error-boundary')).toBeInTheDocument();
-      expect(screen.getByTestId('home-component')).toBeInTheDocument();
+      expect(screen.getByText('Failed to Initialize')).toBeInTheDocument();
+      expect(screen.getByText('Unable to connect to the Falcon API: Connection failed')).toBeInTheDocument();
+      expect(screen.getByText('Retry')).toBeInTheDocument();
+      expect(screen.queryByTestId('home-component')).not.toBeInTheDocument();
     });
 
-    it.skip('should render when falcon is not initialized', () => {
+    it('should render loading state when falcon is not initialized', () => {
       mockUseFalconApi.mockReturnValue({
         ...defaultMockReturn,
         isInitialized: false,
@@ -97,8 +102,23 @@ describe('App', () => {
       
       render(<App />);
       
-      expect(screen.getByTestId('error-boundary')).toBeInTheDocument();
-      expect(screen.getByTestId('home-component')).toBeInTheDocument();
+      expect(screen.getByText('Initializing...')).toBeInTheDocument();
+      expect(screen.queryByTestId('home-component')).not.toBeInTheDocument();
+    });
+
+    it('should call retry function when retry button is clicked', () => {
+      mockUseFalconApi.mockReturnValue({
+        ...defaultMockReturn,
+        isInitialized: false,
+        error: 'Connection failed',
+      });
+      
+      render(<App />);
+      
+      const retryButton = screen.getByText('Retry');
+      retryButton.click();
+      
+      expect(mockRetry).toHaveBeenCalledTimes(1);
     });
   });
 
