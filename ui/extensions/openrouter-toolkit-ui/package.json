@@ -28,7 +28,7 @@
     "@testing-library/user-event": "^14.5.2",
     "@types/jest": "^30.0.0",
     "@types/react": "^19.1.11",
-    "@types/react-dom": "^19.1.7",
+    "@types/react-dom": "^19.1.9",
     "@web/rollup-plugin-html": "^2.3.0",
     "autoprefixer": "^10.4.21",
     "cross-env": "^10.0.0",
