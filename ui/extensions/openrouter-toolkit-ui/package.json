@@ -45,7 +45,7 @@
     "rollup-plugin-gzip": "^4.1.1",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-plugin-visualizer": "^6.0.3",
-    "tailwindcss": "^4.1.12",
+    "tailwindcss": "^4.1.13",
     "terser": "^5.44.0",
     "ts-jest": "^29.2.6",
     "typescript": "^5.9.2"
