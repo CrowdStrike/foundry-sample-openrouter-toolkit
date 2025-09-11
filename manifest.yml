@@ -1,5 +1,5 @@
 name: OpenRouter Toolkit
-description: Provides seamless integration with OpenRouter's unified API to access multiple AI model providers (OpenAI, Anthropic, Meta, Google) directly within CrowdStrike workflows for advanced threat analysis and security research
+description: Provides seamless integration with OpenRouter's unified API to access multiple AI model providers (OpenAI, Anthropic, Meta, Google) directly within CrowdStrike Falcon console for advanced threat analysis and security research
 logo: images/openrouter-logo.png
 vendor: CrowdStrike
 vendor_products: []
