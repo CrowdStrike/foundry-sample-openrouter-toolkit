@@ -1,5 +1,5 @@
 name: OpenRouter Toolkit
-description: OpenRouter Toolkit for chat completions
+description: Provides seamless integration with OpenRouter's unified API to access multiple AI model providers (OpenAI, Anthropic, Meta, Google) for advanced threat analysis and security research
 logo: images/openrouter-logo.png
 vendor: CrowdStrike
 vendor_products: []
