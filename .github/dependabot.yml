@@ -7,25 +7,6 @@ updates:
       day: "monday"
       time: "14:00"
       timezone: "UTC"
-  - package-ecosystem: npm
-    directory: "/ui/extensions/openrouter-toolkit-ui/"
-    open-pull-requests-limit: 10
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "14:00"
-      timezone: "UTC"
-    groups:
-      react:
-        patterns:
-          - "react"
-          - "react-dom"
-      jest:
-        patterns:
-          - "jest"
-          - "jest-environment-jsdom"
-          - "@types/jest"
-          - "ts-jest"
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
