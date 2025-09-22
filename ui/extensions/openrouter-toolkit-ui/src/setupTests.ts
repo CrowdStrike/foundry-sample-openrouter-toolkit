@@ -94,7 +94,6 @@ export {
 };
 
 // Mock console methods to reduce noise in tests
-const originalConsole = console;
 Object.defineProperty(console, 'debug', { value: jest.fn(), writable: true });
 Object.defineProperty(console, 'error', { value: jest.fn(), writable: true });
 Object.defineProperty(console, 'warn', { value: jest.fn(), writable: true });
