@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
@@ -68,7 +67,7 @@ describe('ResponseDisplay', () => {
 
       expect(screen.getByTestId('spinner')).toBeInTheDocument();
       // Use getAllByText since there might be multiple matching elements
-      const elementsWithWaitingText = screen.getAllByText((content, element) => {
+      const elementsWithWaitingText = screen.getAllByText((_, element) => {
         return element?.textContent?.includes('Waiting for response from') || false;
       });
       expect(elementsWithWaitingText.length).toBeGreaterThan(0);
@@ -78,7 +77,7 @@ describe('ResponseDisplay', () => {
       render(<ResponseDisplay {...defaultProps} loading={true} modelName="gpt-4" />);
 
       // Check that the model name appears in the loading text (use getAllByText since there might be multiple)
-      const elementsWithModelName = screen.getAllByText((content, element) => {
+      const elementsWithModelName = screen.getAllByText((_, element) => {
         return element?.textContent?.includes('gpt-4') || false;
       });
       expect(elementsWithModelName.length).toBeGreaterThan(0);
@@ -301,7 +300,7 @@ describe('ResponseDisplay', () => {
 
       expect(screen.getByText(/Waiting for response from/)).toBeInTheDocument();
       // Since gpt-4 appears after a <br> tag, we need to check the content differently
-      expect(screen.getByText((content, element) => {
+      expect(screen.getByText((_, element) => {
         return element?.textContent === 'gpt-4';
       })).toBeInTheDocument();
     });

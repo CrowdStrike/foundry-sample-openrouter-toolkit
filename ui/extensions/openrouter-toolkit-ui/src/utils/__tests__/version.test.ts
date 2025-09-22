@@ -197,9 +197,6 @@ describe('version', () => {
 
   describe('immutability', () => {
     it('should not allow modification of VERSION object', () => {
-      const originalBuildNumber = VERSION.buildNumber;
-      const originalBuildDate = VERSION.buildDate;
-      const originalIsProduction = VERSION.isProduction;
       
       // Try to modify (this might not throw in non-strict mode, but values shouldn't change)
       try {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Home from '../Home';
 import {
@@ -142,7 +142,7 @@ describe('Home Component', () => {
     
     // Set up default mock implementations
     mockValidateQuery.mockReturnValue({ isValid: true });
-    mockGetDisplayModelName.mockImplementation((model, online) => model);
+    mockGetDisplayModelName.mockImplementation((model) => model);
     mockFormatErrorMessage.mockImplementation((error) => error.message || 'Unknown error');
     mockGenerateCacheKey.mockImplementation((...args) => `cache-key-${args.join('-')}`);
     mockResponseCache.get.mockReturnValue(null);

@@ -1,7 +1,5 @@
 // src/utils/helpers.ts
 
-import { MODEL_GROUPS } from './constants';
-
 /**
  * Wait for a specified amount of time
  * @param ms - Time to wait in milliseconds
