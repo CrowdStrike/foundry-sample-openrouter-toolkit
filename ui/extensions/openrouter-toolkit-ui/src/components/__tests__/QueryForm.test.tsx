@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
@@ -435,7 +434,6 @@ describe('QueryForm', () => {
     });
 
     it('should not submit when query is empty', async () => {
-      const user = userEvent.setup();
       render(<QueryForm {...defaultProps} query="" />);
 
       const submitButton = screen.getByTestId('submit-button');

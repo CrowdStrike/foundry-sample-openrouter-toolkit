@@ -1,8 +1,7 @@
 import {
   buildContextOptions,
   validateContextSelection,
-  getContextType,
-  type ContextOption
+  getContextType
 } from '../contextParser';
 
 describe('contextParser', () => {
