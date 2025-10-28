@@ -4,7 +4,6 @@
 
 import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
-import { RetryHandler } from '../utils/SmartWaiter';
 import { config } from '../config/TestConfig';
 
 export class AppCatalogPage extends BasePage {
@@ -144,7 +143,12 @@ export class AppCatalogPage extends BasePage {
       return;
     }
 
-    this.logger.info('OpenRouter API configuration required, filling dummy API key');
+    this.logger.info('OpenRouter API configuration required, filling configuration name and API key');
+
+    // Fill Name field (first text input)
+    const nameField = this.page.locator('input[type="text"]').first();
+    await nameField.fill('Test Configuration');
+    this.logger.debug('Filled Name field');
 
     // Fill OpenRouter API Key field (password field)
     const apiKeyField = this.page.locator('input[type="password"]').first();
@@ -197,41 +201,6 @@ export class AppCatalogPage extends BasePage {
     } catch (error) {
       this.logger.warn('Installation message not visible, assuming installation succeeded');
     }
-  }
-
-  /**
-   * Navigate to app via Custom Apps menu
-   */
-  async navigateToAppViaCustomApps(appName: string): Promise<void> {
-    this.logger.step(`Navigate to app '${appName}' via Custom Apps`);
-
-    return RetryHandler.withPlaywrightRetry(
-      async () => {
-        // Navigate to Foundry home
-        await this.navigateToPath('/foundry/home', 'Foundry home page');
-
-        // Open hamburger menu
-        const menuButton = this.page.getByRole('button', { name: 'Menu' });
-        await this.smartClick(menuButton, 'Menu button');
-
-        // Click Custom apps
-        const customAppsButton = this.page.getByRole('button', { name: 'Custom apps' });
-        await this.smartClick(customAppsButton, 'Custom apps button');
-
-        // Find and click the app
-        const appButton = this.page.getByRole('button', { name: appName, exact: false }).first();
-        if (await this.elementExists(appButton, 3000)) {
-          await this.smartClick(appButton, `App '${appName}' button`);
-          await this.waiter.delay(1000);
-
-          this.logger.success(`Navigated to app '${appName}' via Custom Apps`);
-          return;
-        }
-
-        throw new Error(`App '${appName}' not found in Custom Apps menu`);
-      },
-      `Navigate to app via Custom Apps`
-    );
   }
 
   /**
