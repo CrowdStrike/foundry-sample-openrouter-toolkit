@@ -127,50 +127,34 @@ export class AppCatalogPage extends BasePage {
   }
 
   /**
-   * Configure ServiceNow API integration if configuration form is present
+   * Configure OpenRouter API integration if configuration form is present
    */
   private async configureServiceNowIfNeeded(): Promise<void> {
-    this.logger.info('Checking if ServiceNow API configuration is required...');
+    this.logger.info('Checking if OpenRouter API configuration is required...');
 
-    // Check if there are text input fields (configuration form)
-    const textInputs = this.page.locator('input[type="text"]');
+    // Check if there are password input fields (API key field)
+    const passwordInputs = this.page.locator('input[type="password"]');
 
     try {
-      await textInputs.first().waitFor({ state: 'visible', timeout: 15000 });
-      const count = await textInputs.count();
-      this.logger.info(`ServiceNow configuration form detected with ${count} input fields`);
+      await passwordInputs.first().waitFor({ state: 'visible', timeout: 15000 });
+      const count = await passwordInputs.count();
+      this.logger.info(`OpenRouter API configuration form detected with ${count} input fields`);
     } catch (error) {
-      this.logger.info('No ServiceNow configuration required - no input fields found');
+      this.logger.info('No API configuration required - no input fields found');
       return;
     }
 
-    this.logger.info('ServiceNow configuration required, filling dummy values');
+    this.logger.info('OpenRouter API configuration required, filling dummy API key');
 
-    // Fill configuration fields using index-based selection
-    // Field 1: Name
-    const nameField = this.page.locator('input[type="text"]').first();
-    await nameField.fill('ServiceNow Test Instance');
-    this.logger.debug('Filled Name field');
-
-    // Field 2: Instance (the {instance} part of {instance}.service-now.com)
-    const instanceField = this.page.locator('input[type="text"]').nth(1);
-    await instanceField.fill('dev12345');
-    this.logger.debug('Filled Instance field');
-
-    // Field 3: Username
-    const usernameField = this.page.locator('input[type="text"]').nth(2);
-    await usernameField.fill('dummy_user');
-    this.logger.debug('Filled Username field');
-
-    // Field 4: Password (must be >8 characters)
-    const passwordField = this.page.locator('input[type="password"]').first();
-    await passwordField.fill('DummyPassword123');
-    this.logger.debug('Filled Password field');
+    // Fill OpenRouter API Key field (password field)
+    const apiKeyField = this.page.locator('input[type="password"]').first();
+    await apiKeyField.fill('sk-or-v1-dummy-key-for-testing-only');
+    this.logger.debug('Filled API Key field with dummy value');
 
     // Wait for network to settle after filling form
     await this.page.waitForLoadState('networkidle');
 
-    this.logger.success('ServiceNow API configuration completed');
+    this.logger.success('OpenRouter API configuration completed');
   }
 
   /**
