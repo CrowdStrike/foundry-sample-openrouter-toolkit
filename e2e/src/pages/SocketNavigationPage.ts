@@ -81,13 +81,17 @@ export class SocketNavigationPage extends BasePage {
       async () => {
         this.logger.info('Navigating to XDR Detections page');
 
+        // Navigate to Foundry home page first
+        await this.foundryHome.goto();
+        await this.foundryHome.verifyLoaded();
+
         // Open the hamburger menu
         const menuButton = this.page.getByRole('button', { name: 'Menu' });
         await menuButton.click();
         await this.page.waitForLoadState('networkidle');
 
-        // Click "Next-Gen SIEM"
-        const ngsiemButton = this.page.getByRole('button', { name: /Next-Gen SIEM/i });
+        // Click "Next-Gen SIEM" menu item - use the one with popout-button selector (the menu item, not the home page card)
+        const ngsiemButton = this.page.getByTestId('popout-button').filter({ hasText: /Next-Gen SIEM/i });
         await ngsiemButton.click();
         await this.waiter.delay(500);
 
@@ -133,8 +137,8 @@ export class SocketNavigationPage extends BasePage {
         await nextGenSiemButton.click();
         this.logger.debug('Clicked Next-Gen SIEM menu');
 
-        // Click "Incidents" - it appears as text, not necessarily a link role
-        const incidentsLink = this.page.locator('text="Incidents"').first();
+        // Click "Incidents" - use section-link selector to avoid the learn card
+        const incidentsLink = this.page.getByTestId('section-link').filter({ hasText: /Incidents/i });
         await incidentsLink.waitFor({ state: 'visible', timeout: 10000 });
         await incidentsLink.click();
         this.logger.debug('Clicked Incidents');
