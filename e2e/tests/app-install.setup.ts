@@ -10,7 +10,7 @@ setup('install OpenRouter Toolkit app', async ({ appCatalogPage, appName }) => {
 
     if (!installed) {
       throw new Error(
-        `Failed to install app '${appName}'. Please install the app manually from the Foundry App Catalog or Custom Apps menu.`
+        `Failed to install app '${appName}'. Please install the app manually from the Foundry App Catalog.`
       );
     }
   } else {

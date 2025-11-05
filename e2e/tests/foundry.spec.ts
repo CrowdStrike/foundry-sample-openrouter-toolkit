@@ -18,14 +18,14 @@ test.describe('OpenRouter Toolkit Extension E2E Tests', () => {
 
   test.describe('Extension Installation and Discovery', () => {
     test('should verify OpenRouter Toolkit extension is installed', async ({ openRouterToolkitPage, appName }) => {
-      // Navigate to NGSIEM Incidents to access the extension socket
+      // Navigate to Incidents to access the extension socket
       await openRouterToolkitPage.navigateToNGSIEMIncidents();
 
-      // Verify we're on the NGSIEM incidents page
+      // Verify we're on the Incidents page
       const currentUrl = openRouterToolkitPage.page.url();
-      expect(currentUrl).toMatch(/\/ngsiem\/workbench\/incidents/);
+      expect(currentUrl).toMatch(/\/xdr\/incidents/);
 
-      logger.success(`${appName} extension is accessible from NGSIEM Incidents page`);
+      logger.success(`${appName} extension is accessible from Incidents page`);
     });
   });
 
@@ -67,6 +67,9 @@ test.describe('OpenRouter Toolkit Extension E2E Tests', () => {
     test('should verify extension iframe loads without errors', async ({ openRouterToolkitPage, page }) => {
       await openRouterToolkitPage.navigateToExtension();
 
+      // Expand the extension and verify it renders
+      await openRouterToolkitPage.verifyExtensionRenders();
+
       // Verify iframe is present and visible
       const iframe = page.locator('iframe');
       await expect(iframe).toBeVisible({ timeout: 15000 });
@@ -74,11 +77,9 @@ test.describe('OpenRouter Toolkit Extension E2E Tests', () => {
       // Get the iframe locator for content checks
       const iframeContent = page.frameLocator('iframe');
 
-      // Verify main content loaded - look for OpenRouter branding or heading
-      const heading = iframeContent.getByRole('heading', { name: /OpenRouter/i }).or(
-        iframeContent.getByText(/OpenRouter/i).first()
-      );
-      await expect(heading).toBeVisible({ timeout: 15000 });
+      // Verify main content loaded - look for Request/Response tabs or form elements
+      const requestTab = iframeContent.getByRole('tab', { name: /request/i });
+      await expect(requestTab).toBeVisible({ timeout: 15000 });
 
       // Quick loading check - ensure no persistent loading indicators
       const loadingIndicators = iframeContent.locator('.loading, .spinner, [data-testid="loading"], [aria-label*="loading"], sl-spinner');

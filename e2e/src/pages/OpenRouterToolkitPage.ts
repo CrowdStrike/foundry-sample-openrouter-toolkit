@@ -3,7 +3,6 @@ import { SocketNavigationPage } from './SocketNavigationPage';
 
 /**
  * Page object for testing the OpenRouter Toolkit UI extension
- * Extension appears in ngsiem.workbench.details socket
  */
 export class OpenRouterToolkitPage extends SocketNavigationPage {
   constructor(page: Page) {
@@ -13,36 +12,145 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
   async navigateToExtension(): Promise<void> {
     return this.withTiming(
       async () => {
-        // Navigate to NGSIEM Incidents (ngsiem.workbench.details socket)
         await this.navigateToNGSIEMIncidents();
-
-        // Open first incident to show details panel with extensions
-        await this.openFirstIncident();
-
-        // Wait for incident details panel
+        await this.openFirstCase();
+        await this.navigateToWorkbench();
+        await this.clickGraphNode();
         await this.page.waitForLoadState('networkidle');
 
-        this.logger.success('Navigated to incident with OpenRouter Toolkit extension');
+        this.logger.success('Navigated to incident workbench with OpenRouter Toolkit extension');
       },
       'Navigate to OpenRouter Toolkit Extension'
     );
   }
 
-  /** Open the first incident in the NGSIEM workbench */
-  async openFirstIncident(): Promise<void> {
+  async openFirstCase(): Promise<void> {
     return this.withTiming(
       async () => {
         await this.page.waitForLoadState('networkidle');
 
-        // Click on the first incident - look for gridcell buttons with incident information
-        const firstIncidentButton = this.page.locator('[role="gridcell"] button').first();
-        await firstIncidentButton.waitFor({ state: 'visible', timeout: 10000 });
+        const firstIncidentButton = this.page.locator('[role="gridcell"] button, [role="row"]:has([role="gridcell"]) a').first();
+        await firstIncidentButton.waitFor({ state: 'visible', timeout: 15000 });
         await firstIncidentButton.click();
 
-        // Wait for incident details to load
         await this.page.waitForLoadState('networkidle');
+
+        this.logger.success('Opened first incident');
       },
       'Open first incident'
+    );
+  }
+
+  async navigateToWorkbench(): Promise<void> {
+    return this.withTiming(
+      async () => {
+        this.logger.info('Navigating to Workbench view via Actions menu');
+
+        const actionsButton = this.page.getByRole('button', { name: /Actions/i });
+        await actionsButton.waitFor({ state: 'visible', timeout: 10000 });
+        await actionsButton.click();
+        this.logger.debug('Clicked Actions button');
+
+        const workbenchViewOption = this.page.getByRole('menuitem', { name: /Workbench View/i }).or(
+          this.page.locator('text="Workbench View"')
+        );
+        await workbenchViewOption.waitFor({ state: 'visible', timeout: 10000 });
+        await workbenchViewOption.click();
+        this.logger.debug('Clicked Workbench View');
+
+        await this.page.waitForLoadState('networkidle');
+
+        this.logger.success('Navigated to Workbench view');
+      },
+      'Navigate to Workbench view'
+    );
+  }
+
+  async searchForNode(searchTerm: string): Promise<void> {
+    return this.withTiming(
+      async () => {
+        this.logger.info(`Searching for: ${searchTerm}`);
+
+        let searchBox = this.page.getByRole('searchbox').first();
+        const searchBoxVisible = await searchBox.isVisible().catch(() => false);
+
+        if (!searchBoxVisible) {
+          const searchButton = this.page.getByRole('button', { name: 'Search on graph' });
+          await searchButton.waitFor({ state: 'visible', timeout: 10000 });
+          await searchButton.click();
+          this.logger.debug('Clicked "Search on graph" button');
+
+          await searchBox.waitFor({ state: 'visible', timeout: 5000 });
+          this.logger.debug('Search box appeared');
+        }
+
+        await searchBox.clear();
+        await searchBox.fill(searchTerm);
+        this.logger.debug(`Entered search term: ${searchTerm}`);
+
+        await this.page.waitForTimeout(3000);
+
+        const resultsHeading = this.page.locator('text=/search results/i').first();
+        const hasResults = await resultsHeading.isVisible({ timeout: 2000 }).catch(() => false);
+
+        if (!hasResults) {
+          this.logger.warn(`No search results found for: ${searchTerm}`);
+          throw new Error(`No search results found for: ${searchTerm}`);
+        }
+
+        const resultButtons = this.page.locator('button').filter({ hasText: /matches/i });
+        const resultCount = await resultButtons.count();
+
+        if (resultCount === 0) {
+          this.logger.warn(`No result buttons found for: ${searchTerm}`);
+          throw new Error(`No search result buttons found for: ${searchTerm}`);
+        }
+
+        this.logger.debug(`Found ${resultCount} search result buttons`);
+        await resultButtons.first().click();
+        this.logger.debug('Clicked first search result');
+
+        const detailsHeading = this.page.locator('h2, h1').first();
+        await detailsHeading.waitFor({ state: 'visible', timeout: 10000 });
+        this.logger.success('Details panel opened for selected node');
+      },
+      `Search for: ${searchTerm}`
+    );
+  }
+
+  async clickGraphNode(): Promise<void> {
+    return this.withTiming(
+      async () => {
+        this.logger.info('Selecting a graph node to reveal extension panel');
+
+        await this.page.waitForLoadState('networkidle');
+
+        // Wait for loading indicators to disappear
+        const loadingIndicators = this.page.locator('[class*="loading"], [class*="spinner"], [data-testid*="loading"]');
+        const spinnerCount = await loadingIndicators.count();
+        if (spinnerCount > 0) {
+          this.logger.debug(`Waiting for ${spinnerCount} loading indicators to disappear`);
+          try {
+            await loadingIndicators.first().waitFor({ state: 'hidden', timeout: 30000 });
+            this.logger.debug('Loading indicators disappeared');
+          } catch (error) {
+            this.logger.warn('Loading indicators still present after 30s, continuing anyway');
+          }
+        }
+
+        // Wait for graph to render
+        const graphContainer = this.page.locator('canvas, svg').first();
+        await graphContainer.waitFor({ state: 'visible', timeout: 15000 });
+        this.logger.debug('Graph container is visible');
+
+        // Wait for toolbar to be ready
+        await this.page.waitForTimeout(3000);
+
+        // Use search to select a node - searching for "e" returns multiple results
+        await this.searchForNode('e');
+        this.logger.success('Successfully selected a node using search');
+      },
+      'Click graph node'
     );
   }
 
@@ -51,52 +159,55 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
       async () => {
         this.logger.info('Verifying OpenRouter Toolkit extension renders');
 
-        // Wait for incident details panel to load
         await this.page.waitForLoadState('networkidle');
 
-        // Extensions in incident details appear as expandable buttons
-        // Look for button named "OpenRouter Toolkit"
-        const extensionButton = this.page.getByRole('button', {
-          name: /OpenRouter Toolkit/i
-        });
+        // Scroll to bottom of details panel where extensions appear
+        await this.page.keyboard.press('End');
+        await this.page.keyboard.press('End');
+        await this.page.waitForTimeout(1000);
 
-        // Scroll the button into view if needed
-        await extensionButton.scrollIntoViewIfNeeded({ timeout: 10000 });
-        this.logger.info('Scrolled to OpenRouter Toolkit extension button');
+        const extensionHeading = this.page.locator('button', {
+          hasText: /OpenRouter Toolkit/i
+        }).first();
 
-        // Wait for button to be visible
-        await expect(extensionButton).toBeVisible({ timeout: 10000 });
-        this.logger.info('Found OpenRouter Toolkit extension button');
+        await extensionHeading.waitFor({ state: 'visible', timeout: 15000 });
+        this.logger.info('Found OpenRouter Toolkit extension heading');
 
-        // Check if already expanded, if not click to expand
-        const isExpanded = await extensionButton.getAttribute('aria-expanded');
-        if (isExpanded === 'false') {
-          await extensionButton.click();
+        await extensionHeading.scrollIntoViewIfNeeded({ timeout: 5000 });
+
+        // Expand extension if collapsed
+        const isExpanded = await extensionHeading.getAttribute('aria-expanded');
+        if (isExpanded === 'false' || isExpanded === null) {
+          this.logger.info('Extension is collapsed, clicking to expand');
+          await extensionHeading.click();
+          await this.page.waitForTimeout(1000);
           this.logger.info('Clicked to expand OpenRouter Toolkit extension');
-        } else {
-          this.logger.info('OpenRouter Toolkit extension already expanded');
         }
 
-        // Verify iframe loads
+        // Verify iframe and form elements
         await expect(this.page.locator('iframe')).toBeVisible({ timeout: 15000 });
         this.logger.info('Extension iframe loaded');
 
-        // Verify iframe content
         const iframe: FrameLocator = this.page.frameLocator('iframe');
 
-        // Check for OpenRouter Toolkit UI elements
-        // Look for the main heading or title
-        await expect(iframe.getByRole('heading', { name: /OpenRouter/i }).or(
-          iframe.getByText(/OpenRouter/i).first()
-        )).toBeVisible({ timeout: 10000 });
+        const requestTab = iframe.getByRole('tab', { name: /request/i });
+        await expect(requestTab).toBeVisible({ timeout: 10000 });
 
-        this.logger.success('OpenRouter Toolkit extension renders correctly with expected content');
+        const queryInput = iframe.getByRole('textbox', { name: /query/i });
+        await expect(queryInput).toBeVisible({ timeout: 10000 });
+
+        const modelSelector = iframe.getByRole('combobox', { name: /model/i });
+        await expect(modelSelector).toBeVisible({ timeout: 10000 });
+
+        const submitButton = iframe.getByRole('button', { name: /submit/i });
+        await expect(submitButton).toBeVisible({ timeout: 10000 });
+
+        this.logger.success('OpenRouter Toolkit extension renders correctly with all expected form elements');
       },
       'Verify OpenRouter Toolkit extension renders'
     );
   }
 
-  /** Verify the query form is present and interactive */
   async verifyQueryFormPresent(): Promise<void> {
     return this.withTiming(
       async () => {
@@ -104,15 +215,12 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
 
         const iframe: FrameLocator = this.page.frameLocator('iframe');
 
-        // Look for textarea or input for query
         const queryInput = iframe.locator('textarea, input[type="text"]').first();
         await expect(queryInput).toBeVisible({ timeout: 10000 });
 
-        // Look for model selection dropdown
         const modelSelect = iframe.locator('select, [role="combobox"]').first();
         await expect(modelSelect).toBeVisible({ timeout: 5000 });
 
-        // Look for submit button
         const submitButton = iframe.getByRole('button', { name: /submit|send|query/i }).or(
           iframe.locator('button[type="submit"]')
         );
@@ -124,7 +232,6 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
     );
   }
 
-  /** Test basic query form interaction (without API key) */
   async testBasicQueryInteraction(): Promise<void> {
     return this.withTiming(
       async () => {
@@ -132,23 +239,14 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
 
         const iframe: FrameLocator = this.page.frameLocator('iframe');
 
-        // Enter a test query
-        const queryInput = iframe.locator('textarea, input[type="text"]').first();
+        const queryInput = iframe.getByRole('textbox', { name: /query/i });
         await queryInput.fill('What is this incident about?');
         this.logger.info('Entered test query');
 
-        // Try to submit (expect error handling for missing/invalid API key)
-        const submitButton = iframe.getByRole('button', { name: /submit|send|query/i }).or(
-          iframe.locator('button[type="submit"]')
-        ).first();
+        const submitButton = iframe.getByRole('button', { name: /submit/i });
         await submitButton.click({ force: true });
         this.logger.info('Clicked submit button');
 
-        // Wait for response (either error message or loading indicator)
-        await this.page.waitForTimeout(2000);
-
-        // Verify some kind of feedback appears (error message, loading state, etc.)
-        // This validates the UI is responsive even if API call fails
         this.logger.success('Query form interaction completed (expecting API error is normal)');
       },
       'Test basic query interaction'
