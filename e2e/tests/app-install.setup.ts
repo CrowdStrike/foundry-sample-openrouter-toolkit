@@ -1,6 +1,6 @@
 import { test as setup } from '../src/fixtures';
 
-setup('install OpenRouter Toolkit app', async ({ appCatalogPage, appName }) => {
+setup('install openrouter toolkit app', async ({ appCatalogPage, appName }) => {
   // Check if app is already installed (this navigates to the app page)
   const isInstalled = await appCatalogPage.isAppInstalled(appName);
 
@@ -9,9 +9,7 @@ setup('install OpenRouter Toolkit app', async ({ appCatalogPage, appName }) => {
     const installed = await appCatalogPage.installApp(appName);
 
     if (!installed) {
-      throw new Error(
-        `Failed to install app '${appName}'. Please install the app manually from the Foundry App Catalog.`
-      );
+      throw new Error(`Failed to install app '${appName}'`);
     }
   } else {
     console.log(`App '${appName}' is already installed`);

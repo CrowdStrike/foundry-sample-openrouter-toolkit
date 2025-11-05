@@ -4,6 +4,7 @@
 
 import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { RetryHandler } from '../utils/SmartWaiter';
 import { config } from '../config/TestConfig';
 
 export class AppCatalogPage extends BasePage {
@@ -126,48 +127,59 @@ export class AppCatalogPage extends BasePage {
   }
 
   /**
-   * Configure OpenRouter API integration if configuration form is present
+   * Configure ServiceNow API integration if configuration form is present
    */
   private async configureServiceNowIfNeeded(): Promise<void> {
-    this.logger.info('Checking if OpenRouter API configuration is required...');
+    this.logger.info('Checking if ServiceNow API configuration is required...');
 
-    // Check if there are password input fields (API key field)
-    const passwordInputs = this.page.locator('input[type="password"]');
+    // Check if there are text input fields (configuration form)
+    const textInputs = this.page.locator('input[type="text"]');
 
     try {
-      await passwordInputs.first().waitFor({ state: 'visible', timeout: 15000 });
-      const count = await passwordInputs.count();
-      this.logger.info(`OpenRouter API configuration form detected with ${count} input fields`);
+      await textInputs.first().waitFor({ state: 'visible', timeout: 15000 });
+      const count = await textInputs.count();
+      this.logger.info(`ServiceNow configuration form detected with ${count} input fields`);
     } catch (error) {
-      this.logger.info('No API configuration required - no input fields found');
+      this.logger.info('No ServiceNow configuration required - no input fields found');
       return;
     }
 
-    this.logger.info('OpenRouter API configuration required, filling configuration name and API key');
+    this.logger.info('ServiceNow configuration required, filling dummy values');
 
-    // Fill Name field (first text input)
+    // Fill configuration fields using index-based selection
+    // Field 1: Name
     const nameField = this.page.locator('input[type="text"]').first();
-    await nameField.fill('Test Configuration');
+    await nameField.fill('ServiceNow Test Instance');
     this.logger.debug('Filled Name field');
 
-    // Fill OpenRouter API Key field (password field)
-    const apiKeyField = this.page.locator('input[type="password"]').first();
-    await apiKeyField.fill('sk-or-v1-dummy-key-for-testing-only');
-    this.logger.debug('Filled API Key field with dummy value');
+    // Field 2: Instance (the {instance} part of {instance}.service-now.com)
+    const instanceField = this.page.locator('input[type="text"]').nth(1);
+    await instanceField.fill('dev12345');
+    this.logger.debug('Filled Instance field');
+
+    // Field 3: Username
+    const usernameField = this.page.locator('input[type="text"]').nth(2);
+    await usernameField.fill('dummy_user');
+    this.logger.debug('Filled Username field');
+
+    // Field 4: Password (must be >8 characters)
+    const passwordField = this.page.locator('input[type="password"]').first();
+    await passwordField.fill('DummyPassword123');
+    this.logger.debug('Filled Password field');
 
     // Wait for network to settle after filling form
     await this.page.waitForLoadState('networkidle');
 
-    this.logger.success('OpenRouter API configuration completed');
+    this.logger.success('ServiceNow API configuration completed');
   }
 
   /**
-   * Click the final "Install app" button
+   * Click the final "Save and install" button
    */
   private async clickInstallAppButton(): Promise<void> {
-    const installButton = this.page.getByRole('button', { name: 'Install app' });
+    const installButton = this.page.getByRole('button', { name: 'Save and install' });
 
-    await this.waiter.waitForVisible(installButton, { description: 'Install app button' });
+    await this.waiter.waitForVisible(installButton, { description: 'Save and install button' });
 
     // Wait for button to be enabled
     await installButton.waitFor({ state: 'visible', timeout: 10000 });
@@ -176,8 +188,8 @@ export class AppCatalogPage extends BasePage {
     // Simple delay for form to enable button
     await this.waiter.delay(1000);
 
-    await this.smartClick(installButton, 'Install app button');
-    this.logger.info('Clicked Install app button');
+    await this.smartClick(installButton, 'Save and install button');
+    this.logger.info('Clicked Save and install button');
   }
 
   /**
@@ -201,6 +213,41 @@ export class AppCatalogPage extends BasePage {
     } catch (error) {
       this.logger.warn('Installation message not visible, assuming installation succeeded');
     }
+  }
+
+  /**
+   * Navigate to app via Custom Apps menu
+   */
+  async navigateToAppViaCustomApps(appName: string): Promise<void> {
+    this.logger.step(`Navigate to app '${appName}' via Custom Apps`);
+
+    return RetryHandler.withPlaywrightRetry(
+      async () => {
+        // Navigate to Foundry home
+        await this.navigateToPath('/foundry/home', 'Foundry home page');
+
+        // Open hamburger menu
+        const menuButton = this.page.getByRole('button', { name: 'Menu' });
+        await this.smartClick(menuButton, 'Menu button');
+
+        // Click Custom apps
+        const customAppsButton = this.page.getByRole('button', { name: 'Custom apps' });
+        await this.smartClick(customAppsButton, 'Custom apps button');
+
+        // Find and click the app
+        const appButton = this.page.getByRole('button', { name: appName, exact: false }).first();
+        if (await this.elementExists(appButton, 3000)) {
+          await this.smartClick(appButton, `App '${appName}' button`);
+          await this.waiter.delay(1000);
+
+          this.logger.success(`Navigated to app '${appName}' via Custom Apps`);
+          return;
+        }
+
+        throw new Error(`App '${appName}' not found in Custom Apps menu`);
+      },
+      `Navigate to app via Custom Apps`
+    );
   }
 
   /**
@@ -242,7 +289,7 @@ export class AppCatalogPage extends BasePage {
       const successMessage = this.page.getByText(/has been uninstalled/i);
       await this.waiter.waitForVisible(successMessage, {
         description: 'Uninstall success message',
-        timeout: 10000
+        timeout: 30000
       });
 
       this.logger.success(`App '${appName}' uninstalled successfully`);
