@@ -12,8 +12,6 @@ ignored:
 - functions/.*/htmlcov/test_.*
 - ui/(extensions|pages)/.*/__tests__/.*
 - ui/(extensions|pages)/.*/.*\.test\..*
-- e2e
-- e2e/.+
 ui:
   homepage: ''
   extensions:
