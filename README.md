@@ -96,6 +96,30 @@ A CrowdStrike Foundry extension that provides seamless integration with OpenRout
 
 See this sample's [App docs README](app_docs/README.md) for more information.
 
+## E2E Testing
+
+This project includes end-to-end tests using Playwright to verify the extension installs and renders correctly in the Foundry platform.
+
+### Running E2E Tests Locally
+
+```bash
+cd e2e
+npm ci
+npx playwright install chromium
+cp .env.sample .env
+# Edit .env with your Falcon credentials
+npm test
+```
+
+See the [E2E README](e2e/README.md) for detailed testing instructions, test scenarios, and troubleshooting.
+
+### CI/CD
+
+E2E tests run automatically in GitHub Actions on pushes and pull requests to verify:
+- Extension installation and discovery
+- UI rendering in the NGSIEM workbench socket
+- Form interactions and error handling
+
 ## Foundry resources
 
 - Foundry documentation: [US-1](https://falcon.crowdstrike.com/documentation/category/c3d64B8e/falcon-foundry) | [US-2](https://falcon.us-2.crowdstrike.com/documentation/category/c3d64B8e/falcon-foundry) | [EU](https://falcon.eu-1.crowdstrike.com/documentation/category/c3d64B8e/falcon-foundry)
