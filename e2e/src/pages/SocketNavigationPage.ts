@@ -37,7 +37,7 @@ export class SocketNavigationPage extends BasePage {
         this.logger.info('Navigating to Endpoint Detections page');
 
         // Open the hamburger menu
-        const menuButton = this.page.getByRole('button', { name: 'Menu' });
+        const menuButton = this.page.getByTestId('nav-trigger');
         await menuButton.click();
         await this.page.waitForLoadState('networkidle');
 
@@ -86,7 +86,7 @@ export class SocketNavigationPage extends BasePage {
         await this.foundryHome.verifyLoaded();
 
         // Open the hamburger menu
-        const menuButton = this.page.getByRole('button', { name: 'Menu' });
+        const menuButton = this.page.getByTestId('nav-trigger');
         await menuButton.click();
         await this.page.waitForLoadState('networkidle');
 
@@ -126,7 +126,7 @@ export class SocketNavigationPage extends BasePage {
         await this.foundryHome.verifyLoaded();
 
         // Open the hamburger menu
-        const menuButton = this.page.getByRole('button', { name: 'Menu' });
+        const menuButton = this.page.getByTestId('nav-trigger');
         await menuButton.waitFor({ state: 'visible', timeout: 10000 });
         await menuButton.click();
         this.logger.debug('Opened hamburger menu');
