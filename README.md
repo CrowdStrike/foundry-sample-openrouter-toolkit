@@ -1,8 +1,8 @@
 ![CrowdStrike Falcon](/images/cs-logo.png?raw=true)
 
-# OpenRouter Toolkit sample Foundry app
+# Azure AI Toolkit sample Foundry app
 
-The OpenRouter Toolkit sample Foundry app is a community-driven, open source project which serves as an example of an app which can be built using CrowdStrike's Foundry ecosystem. `foundry-sample-openrouter-toolkit` is an open source project, not a CrowdStrike product. As such, it carries no formal support, expressed or implied.
+The Azure AI Toolkit sample Foundry app is a community-driven, open source project which serves as an example of an app which can be built using CrowdStrike's Foundry ecosystem. `foundry-sample-Azure AI-toolkit` is an open source project, not a CrowdStrike product. As such, it carries no formal support, expressed or implied.
 
 This app is one of several App Templates included in Foundry that you can use to jumpstart your development. It comes complete with a set of preconfigured capabilities aligned to its business purpose. Deploy this app from the Templates page with a single click in the Foundry UI, or create an app from this template using the CLI.
 
@@ -11,7 +11,7 @@ This app is one of several App Templates included in Foundry that you can use to
 
 ## Description
 
-The OpenRouter Toolkit brings the power of various AI models directly into your CrowdStrike workflow, allowing security professionals to leverage advanced language models for threat analysis, indicator investigation, and general security research without leaving the platform.
+The Azure AI Toolkit brings the power of various AI models directly into your CrowdStrike workflow, allowing security professionals to leverage advanced language models for threat analysis, indicator investigation, and general security research without leaving the platform.
 
 ## Prerequisites
 
@@ -47,11 +47,11 @@ Run `foundry version` to verify it's installed correctly.
 
 ## Getting Started
 
-Clone this sample to your local system, or [download as a zip file](https://github.com/CrowdStrike/foundry-sample-openrouter-toolkit/archive/refs/heads/main.zip) and import it into Foundry.
+Clone this sample to your local system, or [download as a zip file](https://github.com/CrowdStrike/foundry-sample-Azure AI-toolkit/archive/refs/heads/main.zip) and import it into Foundry.
 
 ```shell
-git clone https://github.com/CrowdStrike/foundry-sample-openrouter-toolkit
-cd foundry-sample-openrouter-toolkit
+git clone https://github.com/CrowdStrike/foundry-sample-Azure AI-toolkit
+cd foundry-sample-Azure AI-toolkit
 ```
 
 Log in to Foundry:
@@ -86,7 +86,7 @@ Next, go to **Foundry** > **App catalog**, find your app, and install it. Go to 
 
 ## About this sample app
 
-A CrowdStrike Foundry extension that provides seamless integration with OpenRouter's API, enabling access to multiple Large Language Model providers through a unified interface within the CrowdStrike security platform.
+A CrowdStrike Foundry extension that provides seamless integration with Azure AI's API, enabling access to multiple Large Language Model providers through a unified interface within the CrowdStrike security platform.
 
 **Key Benefits:**
 - **Multi-Model Access**: Choose from OpenAI, Anthropic, Meta, Google, and other leading AI providers
