@@ -500,7 +500,7 @@ describe('workflowExecutor', () => {
           provider_sort_input: 'price',
           context_input: 'test context'
         },
-        { workflow_id: 'OpenRouter_Toolkit_Query' }
+        { workflow_id: 'Azure_AI_Toolkit_Query' }
       );
     });
   });

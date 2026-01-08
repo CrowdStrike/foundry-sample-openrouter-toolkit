@@ -2,7 +2,8 @@
   "components": {
     "securitySchemes": {
       "apiKey": {
-        "bearerFormat": "Bearer",
+        "in": "header",
+        "name": "api-key",
         "type": "apiKey"
       }
     }
@@ -11,16 +12,35 @@
     "contact": {
       "email": "nathan.labadie@crowdstrike.com"
     },
-    "description": "Integration with the OpenRouter API.",
-    "title": "OpenRouter API",
+    "description": "Integration with the Azure AI API.",
+    "title": "Azure AI API",
     "version": ""
   },
   "openapi": "3.0.3",
   "paths": {
-    "/chat/completions": {
+    "/openai/deployments/{deployment_id}/chat/completions": {
       "post": {
         "description": "Creates a completion for the chat message",
-        "operationId": "OpenRouter Chat Completion",
+        "operationId": "Azure AI Chat Completion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deployment_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "api-version",
+            "required": true,
+            "schema": {
+              "default": "2025-01-01-preview",
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -50,16 +70,10 @@
                     },
                     "type": "array"
                   },
-                  "model": {
-                    "default": "openrouter/auto",
-                    "description": "ID of the model to use.",
-                    "examples": [
-                      "openai/gpt-4-turbo",
-                      "anthropic/claude-3-opus",
-                      "google/gemini-pro"
-                    ],
-                    "title": "Model",
-                    "type": "string"
+                  "temperature": {
+                    "default": 1.0,
+                    "description": "Sampling temperature.",
+                    "type": "number"
                   }
                 },
                 "required": [
@@ -101,14 +115,6 @@
                                 "description": "Content of the message",
                                 "type": "string"
                               },
-                              "reasoning": {
-                                "description": "Optional reasoning provided by the model",
-                                "type": "string"
-                              },
-                              "refusal": {
-                                "description": "Details if the model refused to respond",
-                                "type": "object"
-                              },
                               "role": {
                                 "description": "Role of the message sender",
                                 "example": "assistant",
@@ -116,10 +122,6 @@
                               }
                             },
                             "type": "object"
-                          },
-                          "native_finish_reason": {
-                            "description": "Provider-specific finish reason",
-                            "type": "string"
                           }
                         },
                         "type": "object"
@@ -143,10 +145,6 @@
                       "example": "chat.completion",
                       "type": "string"
                     },
-                    "provider": {
-                      "description": "Provider of the model",
-                      "type": "string"
-                    },
                     "usage": {
                       "description": "Token usage statistics",
                       "properties": {
@@ -154,27 +152,9 @@
                           "description": "Number of tokens in the completion",
                           "type": "integer"
                         },
-                        "completion_tokens_details": {
-                          "properties": {
-                            "reasoning_tokens": {
-                              "description": "Number of tokens used for reasoning",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
                         "prompt_tokens": {
                           "description": "Number of tokens in the prompt",
                           "type": "integer"
-                        },
-                        "prompt_tokens_details": {
-                          "properties": {
-                            "cached_tokens": {
-                              "description": "Number of cached tokens used",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
                         },
                         "total_tokens": {
                           "description": "Total number of tokens used",
@@ -197,7 +177,7 @@
                   "properties": {
                     "error": {
                       "description": "Error message",
-                      "type": "string"
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -213,7 +193,7 @@
                   "properties": {
                     "error": {
                       "description": "Authentication error message",
-                      "type": "string"
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -226,12 +206,12 @@
         "x-cs-operation-config": {
           "timeout_seconds": 60,
           "workflow": {
-            "description": "Send queries to OpenRouter",
+            "description": "Send queries to Azure AI",
             "expose_to_workflow": true,
-            "name": "OpenRouter Chat Completion",
+            "name": "Azure AI Chat Completion",
             "system": false,
             "tags": [
-              "OpenRouter"
+              "Azure AI"
             ]
           }
         }
@@ -245,7 +225,7 @@
   ],
   "servers": [
     {
-      "url": "https://openrouter.ai/api/v1"
+      "url": "https://ad-jo-mg8x3t2p-eastus2.cognitiveservices.azure.com"
     }
   ],
   "x-cs-multi-instance": true

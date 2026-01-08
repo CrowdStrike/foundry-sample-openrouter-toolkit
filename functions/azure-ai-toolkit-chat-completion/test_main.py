@@ -1,4 +1,4 @@
-"""Test module for the OpenRouter Toolkit Chat Completion function handler."""
+"""Test module for the Azure AI Toolkit Chat Completion function handler."""
 
 import json
 import time
@@ -57,7 +57,7 @@ patcher.stop()
 
 
 class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attributes,too-many-public-methods
-    """Test case class for OpenRouter Toolkit Chat Completion function handler tests."""
+    """Test case class for Azure AI Toolkit Chat Completion function handler tests."""
 
     def setUp(self):
         """Set up test fixtures before each test method."""
@@ -117,7 +117,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
             "model_name_input": "test-model"
         }
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 400)
         self.assertEqual(len(response.errors), 1)
@@ -130,7 +130,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
             "user_prompt_input": "Test prompt"
         }
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 400)
         self.assertEqual(len(response.errors), 1)
@@ -141,7 +141,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         request = Request()
         request.body = {}
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 400)
         self.assertEqual(len(response.errors), 1)
@@ -157,7 +157,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
             "model_name_input": "test-model"
         }
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 400)
         self.assertEqual(len(response.errors), 1)
@@ -172,46 +172,11 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
             "model_name_input": "test-model"
         }
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 400)
         self.assertEqual(len(response.errors), 1)
         self.assertIn("Prompt too long", response.errors[0].message)
-
-    def test_invalid_provider_sort(self):
-        """Test request with invalid provider_sort returns 400 error."""
-        request = Request()
-        request.body = {
-            "user_prompt_input": "Test prompt",
-            "model_name_input": "test-model",
-            "provider_sort_input": "invalid_sort"
-        }
-
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-
-        self.assertEqual(response.code, 400)
-        self.assertEqual(len(response.errors), 1)
-        self.assertIn("Invalid provider sort option", response.errors[0].message)
-
-    def test_valid_provider_sort_options(self):
-        """Test that valid provider sort options are accepted."""
-        valid_options = ["price", "throughput", "latency"]
-
-        for option in valid_options:
-            with self.subTest(provider_sort=option):
-                request = Request()
-                request.body = {
-                    "user_prompt_input": "Test prompt",
-                    "model_name_input": "test-model",
-                    "provider_sort_input": option
-                }
-
-                self.mock_api.execute_command.return_value = self._create_mock_api_response()
-
-                response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-
-                # Should not return validation error
-                self.assertEqual(response.code, 200)
 
     def test_temperature_processing_valid_values(self):
         """Test temperature processing with valid values."""
@@ -235,7 +200,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
 
                 self.mock_api.execute_command.return_value = self._create_mock_api_response()
 
-                response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+                response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
                 self.assertEqual(response.code, 200)
                 # Verify API was called with correct temperature
@@ -259,7 +224,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
 
                 self.mock_api.execute_command.return_value = self._create_mock_api_response()
 
-                response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+                response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
                 self.assertEqual(response.code, 200)
                 # Should use default temperature
@@ -267,50 +232,6 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
                 api_body = call_args[1]["body"]
                 actual_temp = api_body["resources"][0]["request"]["json"]["temperature"]
                 self.assertEqual(actual_temp, main.Config.DEFAULT_TEMPERATURE)
-
-    def test_online_parameter_processing(self):
-        """Test online parameter processing with various input types."""
-        test_cases = [
-            (True, True),
-            (False, False),
-            ("true", True),
-            ("false", False),
-            ("1", True),
-            ("0", False),
-            ("yes", True),
-            ("no", False),
-            ("on", True),
-            ("off", False),
-            ("invalid", False),
-            (None, False),
-            (123, False),
-        ]
-
-        for input_online, expected_online in test_cases:
-            with self.subTest(online=input_online):
-                request = Request()
-                request.body = {
-                    "user_prompt_input": "Test prompt",
-                    "model_name_input": "test-model",
-                    "online_input": input_online
-                }
-
-                self.mock_api.execute_command.return_value = self._create_mock_api_response()
-
-                response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
-
-                self.assertEqual(response.code, 200)
-                # Check if plugins were added for online requests
-                call_args = self.mock_api.execute_command.call_args
-                api_body = call_args[1]["body"]
-                request_json = api_body["resources"][0]["request"]["json"]
-
-                if expected_online:
-                    self.assertIn("plugins", request_json)
-                    self.assertEqual(len(request_json["plugins"]), 1)
-                    self.assertEqual(request_json["plugins"][0]["id"], "web")
-                else:
-                    self.assertNotIn("plugins", request_json)
 
     def test_context_data_valid_json(self):
         """Test request with valid context data JSON."""
@@ -328,7 +249,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
 
         self.mock_api.execute_command.return_value = self._create_mock_api_response()
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 200)
         self.assertTrue(response.body["context_used"])
@@ -348,7 +269,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
 
         self.mock_api.execute_command.return_value = self._create_mock_api_response()
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 200)
         self.assertTrue(response.body["context_used"])
@@ -364,7 +285,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
 
         self.mock_api.execute_command.return_value = self._create_mock_api_response()
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 200)
         self.assertFalse(response.body["context_used"])
@@ -384,7 +305,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
             tokens=150
         )
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 200)
         self.assertEqual(response.body["model_output_text"], "Hello! This is a test response.")
@@ -400,24 +321,23 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         request = Request()
         request.body = {
             "user_prompt_input": "Analyze cybersecurity threat",
-            "model_name_input": "gpt-4",
+            "model_name_input": "gpt-5",
             "temperature_input": 0.7,
             "online_input": True,
-            "provider_sort_input": "latency",
             "context_data_input": {"indicators": ["suspicious.exe"]}
         }
 
         self.mock_api.execute_command.return_value = self._create_mock_api_response(
             content="Detailed threat analysis result",
-            model="gpt-4",
+            model="gpt-5",
             tokens=500
         )
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 200)
         self.assertEqual(response.body["model_output_text"], "Detailed threat analysis result")
-        self.assertEqual(response.body["model"], "gpt-4")
+        self.assertEqual(response.body["model"], "gpt-5")
         self.assertEqual(response.body["tokens"], 500)
         self.assertTrue(response.body["context_used"])
         self.assertEqual(response.body["analysis_type"], "threat_analysis")
@@ -426,10 +346,17 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         call_args = self.mock_api.execute_command.call_args
         api_body = call_args[1]["body"]
         request_json = api_body["resources"][0]["request"]["json"]
+        # In some envs or mock versions, accessing path might differ or be optimized out if empty?
+        # But here it should be present. We will use .get() and verify.
+        request_data = api_body["resources"][0]["request"]
 
         self.assertEqual(request_json["temperature"], 0.7)
-        self.assertIn("plugins", request_json)
-        self.assertEqual(request_json["provider"]["sort"], "latency")
+
+        if "path" in request_data:
+             self.assertEqual(request_data["path"]["deployment_id"], "gpt-5")
+        else:
+             # If path is missing, fail with info
+             self.fail(f"Path params missing in request: {request_data.keys()}")
 
     def test_api_response_parsing_error_missing_body(self):
         """Test error handling when API response is missing body."""
@@ -442,11 +369,11 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         # Mock API response without body
         self.mock_api.execute_command.return_value = {}
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 500)
         self.assertEqual(len(response.errors), 1)
-        self.assertIn("Error parsing OpenRouter response", response.errors[0].message)
+        self.assertIn("Error parsing Azure AI response", response.errors[0].message)
 
     def test_api_response_parsing_error_missing_resources(self):
         """Test error handling when API response is missing resources."""
@@ -459,11 +386,11 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         # Mock API response without resources
         self.mock_api.execute_command.return_value = {"body": {}}
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 500)
         self.assertEqual(len(response.errors), 1)
-        self.assertIn("Error parsing OpenRouter response", response.errors[0].message)
+        self.assertIn("Error parsing Azure AI response", response.errors[0].message)
 
     def test_api_response_parsing_string_response_body(self):
         """Test parsing when response_body is a JSON string."""
@@ -488,7 +415,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
             }
         }
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 200)
         self.assertEqual(response.body["model_output_text"], "Parsed response")
@@ -510,7 +437,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         ]
 
         with patch("main.time.sleep"):  # Mock sleep to speed up test
-            response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+            response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 200)
         self.assertEqual(response.body["model_output_text"], "Success after retries")
@@ -529,7 +456,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         self.mock_api.execute_command.side_effect = Exception("Persistent failure")
 
         with patch("main.time.sleep"):  # Mock sleep to speed up test
-            response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+            response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 500)
         self.assertEqual(len(response.errors), 1)
@@ -555,7 +482,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
 
             self.mock_api.execute_command.return_value = self._create_mock_api_response()
 
-            response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+            response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         # Restart the original patch for other tests
         self.context_analyzer_patcher.start()
@@ -576,7 +503,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
 
         self.mock_api.execute_command.return_value = self._create_mock_api_response()
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 200)
         self.assertIn("request_id", response.body)
@@ -593,7 +520,7 @@ class FnTestCase(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
 
         self.mock_api.execute_command.return_value = self._create_mock_api_response()
 
-        response = main.openrouter_toolkit_chat_completion(request, {}, MagicMock())
+        response = main.azure_ai_toolkit_chat_completion(request, {}, MagicMock())
 
         self.assertEqual(response.code, 200)
         self.assertIn("execution_time_ms", response.body)

@@ -25,7 +25,7 @@ jest.mock('../Home', () => {
     default: function MockHome({ falcon }: { falcon: any }) {
       return (
         <div data-testid="home-component">
-          <h1>OpenRouter Toolkit</h1>
+          <h1>Azure AI Toolkit</h1>
           <div>Falcon: {falcon ? 'Connected' : 'Not Connected'}</div>
         </div>
       );
@@ -66,7 +66,7 @@ describe('App', () => {
       expect(screen.getByTestId('app-container')).toBeInTheDocument();
       
       // Should render the Home component content
-      expect(screen.getByText('OpenRouter Toolkit')).toBeInTheDocument();
+      expect(screen.getByText('Azure AI Toolkit')).toBeInTheDocument();
     });
 
     it.skip('should pass falcon instance to Home component', () => {

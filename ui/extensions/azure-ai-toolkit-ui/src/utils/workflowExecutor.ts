@@ -83,7 +83,7 @@ const executeWorkflow = async (
   payload: Record<string, any>
 ): Promise<any> => {
   const config = {
-    workflow_id: "OpenRouter_Toolkit_Query"
+    workflow_id: "Azure_AI_Toolkit_Query"
   };
 
   try {

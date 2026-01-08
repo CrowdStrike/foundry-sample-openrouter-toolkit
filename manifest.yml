@@ -1,5 +1,5 @@
-name: OpenRouter Toolkit
-description: Provides seamless integration with OpenRouter's unified API to access multiple AI model providers (OpenAI, Anthropic, Meta, Google) for advanced threat analysis and security research
+name: Azure AI Toolkit
+description: Provides seamless integration with Azure AI to access advanced AI models for advanced threat analysis and security research
 logo: images/openrouter-logo.png
 vendor: CrowdStrike
 vendor_products: []
@@ -17,10 +17,10 @@ ignored:
 ui:
   homepage: ''
   extensions:
-  - name: OpenRouter Toolkit
-    description: OpenRouter Toolkit UI
-    path: ui/extensions/openrouter-toolkit-ui/dist
-    entrypoint: ui/extensions/openrouter-toolkit-ui/dist/index.html
+  - name: Azure AI Toolkit
+    description: Azure AI Toolkit UI
+    path: ui/extensions/azure-ai-toolkit-ui/dist
+    entrypoint: ui/extensions/azure-ai-toolkit-ui/dist/index.html
     sockets:
     - ngsiem.workbench.details
     content_security_policy:
@@ -28,7 +28,7 @@ ui:
       - self
       - 'data:'
       - https://cdn.jsdelivr.net
-      - https://openrouter.ai
+      - https://ad-jo-mg8x3t2p-eastus2.cognitiveservices.azure.com
       style-src:
       - self
       - unsafe-inline
@@ -60,9 +60,9 @@ ui:
   dashboards: {}
   navigation: {}
 api_integrations:
-- name: OpenRouter API
-  description: Integration with OpenRouter
-  path: api-integrations/OpenRouter_API.json
+- name: Azure AI API
+  description: Integration with Azure AI
+  path: api-integrations/Azure_AI_API.json
 rtr_scripts: []
 collections: []
 auth:
@@ -76,16 +76,16 @@ auth:
   permissions: {}
   roles: []
 functions:
-- name: openrouter-toolkit-chat-completion
+- name: azure-ai-toolkit-chat-completion
   config: null
-  description: Submit requests to OpenRouter
-  path: functions/openrouter-toolkit-chat-completion
+  description: Submit requests to Azure AI
+  path: functions/azure-ai-toolkit-chat-completion
   environment_variables: {}
   handlers:
-  - name: OpenRouter Toolkit Chat Completion
-    description: Process requests through OpenRouter
+  - name: Azure AI Toolkit Chat Completion
+    description: Process requests through Azure AI
     method: POST
-    api_path: /openrouter-toolkit-chat-completion
+    api_path: /azure-ai-toolkit-chat-completion
     payload_type: ''
     request_schema: schemas/request_schema.json
     response_schema: schemas/response_schema.json
@@ -93,13 +93,13 @@ functions:
       disruptive: false
       system_action: false
       tags:
-      - OpenRouter Toolkit
+      - Azure AI Toolkit
     permissions: []
   language: python
   max_exec_duration_seconds: 60
 workflows:
-- name: OpenRouter Toolkit Query
-  path: workflows/OpenRouter_Toolkit_Query.yml
+- name: Azure AI Toolkit Query
+  path: workflows/Azure_AI_Toolkit_Query.yml
   permissions: []
 parsers: []
 logscale:

@@ -143,7 +143,7 @@ const Home = React.memo(({ falcon }: HomeProps) => {
 
     try {
       // Use consistent workflow configuration for all models
-      const workflowConfig = { name: "OpenRouter Toolkit Query", depth: 0 };
+      const workflowConfig = { name: "Azure AI Toolkit Query", depth: 0 };
       const actualModel = getDisplayModelName(state.modelName, state.online);
       
       const requestPayload: any = {

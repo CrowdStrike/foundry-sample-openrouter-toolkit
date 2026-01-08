@@ -1,5 +1,5 @@
 """
-OpenRouter Toolkit Chat Completion Function - Modular Context-Aware Version
+Azure AI Toolkit Chat Completion Function - Modular Context-Aware Version
 Supports both traditional queries and context-aware OSINT analysis.
 """
 
@@ -41,7 +41,6 @@ class RequestParams:
     model_name: str
     temperature: float = Config.DEFAULT_TEMPERATURE
     online: bool = False
-    provider_sort: Optional[str] = None
     context_data: Optional[Dict] = None  # New: Context data from falcon
     request_id: str = ""
 
@@ -107,23 +106,6 @@ def _process_temperature(request: Request, request_id: str, logger) -> float:
         return Config.DEFAULT_TEMPERATURE
 
 
-def _process_provider_sort(
-    request: Request, request_id: str, logger
-) -> tuple[Optional[str], Optional[Response]]:
-    """Process and validate provider sort parameter."""
-    provider_sort = request.body.get("provider_sort_input")
-    if provider_sort:
-        valid_sorts = ["price", "throughput", "latency"]
-        if provider_sort not in valid_sorts:
-            error_msg = (
-                f"Invalid provider sort option '{provider_sort}'. "
-                f"Valid options: {', '.join(valid_sorts)}"
-            )
-            logger.error(f"[{request_id}] {error_msg}")
-            return None, Response(errors=[APIError(message=error_msg)], code=400)
-    return provider_sort, None
-
-
 def validate_and_extract_params(
     request: Request, logger
 ) -> tuple[RequestParams, Optional[Response]]:
@@ -150,17 +132,8 @@ def validate_and_extract_params(
     # Process temperature
     temperature = _process_temperature(request, request_id, logger)
 
-    # Process online parameter
-    online = request.body.get("online_input", False)
-    if isinstance(online, str):
-        online = online.lower() in ("true", "1", "yes", "on")
-    elif not isinstance(online, bool):
-        online = False
-
-    # Process provider sorting parameter
-    provider_sort, error_response = _process_provider_sort(request, request_id, logger)
-    if error_response:
-        return RequestParams("", "", request_id=request_id), error_response
+    # Process online parameter (Legacy/Unused for Azure AI but kept for interface compatibility)
+    online = False
 
     # Extract context data if provided
     context_data = request.body.get("context_data_input")
@@ -179,7 +152,6 @@ def validate_and_extract_params(
             model_name,
             temperature,
             online,
-            provider_sort,
             context_data,
             request_id,
         ),
@@ -189,40 +161,36 @@ def validate_and_extract_params(
 
 def prepare_api_request(params: RequestParams, final_prompt: str) -> Dict[str, Any]:
     """
-    Prepare the API request body for OpenRouter.
+    Prepare the API request body for Azure AI.
     Uses the final constructed prompt instead of raw user prompt.
     """
     request_payload = {
-        "model": params.model_name,
         "messages": [
             {"role": "user", "content": final_prompt}  # Use the context-aware prompt
         ],
         "temperature": params.temperature,
     }
 
-    # Add provider sorting if specified
-    if params.provider_sort:
-        request_payload["provider"] = {"sort": params.provider_sort}
+    # Azure OpenAI deployment ID is passed as a path parameter
+    path_params = {
+        "deployment_id": params.model_name
+    }
 
-    # Add web plugin if online search is enabled
-    if params.online:
-        request_payload["plugins"] = [
-            {
-                "id": "web",
-                "max_results": 3,
-                "search_prompt": (
-                    "Current cybersecurity threat intelligence, IOC analysis, "
-                    "and security research findings relevant to:"
-                ),
-            }
-        ]
+    # Explicitly set API version for safety
+    query_params = {
+        "api-version": "2025-01-01-preview"
+    }
 
     return {
         "resources": [
             {
-                "definition_id": "OpenRouter API",
-                "operation_id": "OpenRouter Chat Completion",
-                "request": {"json": request_payload},
+                "definition_id": "Azure AI API",
+                "operation_id": "Azure AI Chat Completion",
+                "request": {
+                    "json": request_payload,
+                    "path": path_params,
+                    "query": query_params
+                },
             }
         ]
     }
@@ -286,10 +254,10 @@ def _extract_content_from_response(response_body: Dict) -> str:
     return content
 
 
-def extract_openrouter_response(
+def extract_azure_ai_response(
     api_result: Any, params: RequestParams, logger
 ) -> tuple[Optional[ResponseData], Optional[Response]]:
-    """Extract and validate the response from the OpenRouter API."""
+    """Extract and validate the response from the Azure AI API."""
     try:
         # Progressive validation with clear error messages
         resource_data = _validate_api_structure(api_result)
@@ -297,6 +265,7 @@ def extract_openrouter_response(
         content = _extract_content_from_response(response_body)
 
         # Extract model and token usage information
+        # Azure might return the deployment name or model name
         model = response_body.get("model", params.model_name)
         usage = response_body.get("usage", {})
         tokens = usage.get("total_tokens", 0)
@@ -316,7 +285,7 @@ def extract_openrouter_response(
         )
 
     except (TypeError, KeyError, ValueError) as e:
-        error_msg = f"Error parsing OpenRouter response: {str(e)}"
+        error_msg = f"Error parsing Azure AI response: {str(e)}"
         logger.error(f"[{params.request_id}] {error_msg}")
         return None, Response(errors=[APIError(message=error_msg)], code=500)
 
@@ -368,14 +337,14 @@ def build_context_aware_prompt(params: RequestParams, logger) -> tuple[str, str]
 
 
 def _make_api_call_with_retries(api, body, params, logger, max_retries):
-    """Make OpenRouter API call with retry logic."""
+    """Make Azure AI API call with retry logic."""
     result = None
     retry_count = 0
 
     while retry_count <= max_retries:
         try:
             retry_suffix = f" (retry {retry_count})" if retry_count > 0 else ""
-            logger.info(f"[{params.request_id}] Calling OpenRouter API{retry_suffix}")
+            logger.info(f"[{params.request_id}] Calling Azure AI API{retry_suffix}")
             result = api.execute_command(body=body)
             break
 
@@ -407,14 +376,11 @@ def _log_request_info(params: RequestParams, logger):
     """Log request processing information."""
     request_id = params.request_id
     context_status = "with context analysis" if params.context_data else "standard"
-    online_status = "with web search" if params.online else ""
-    provider_status = (
-        f", provider sort: {params.provider_sort}" if params.provider_sort else ""
-    )
+    online_status = "with web search (ignored)" if params.online else "" # Updated logging
 
     logger.info(
         f"[{request_id}] Processing request - Model: {params.model_name}, "
-        f"Temperature: {params.temperature} ({context_status}{online_status}{provider_status})"
+        f"Temperature: {params.temperature} ({context_status}{online_status})"
     )
 
 
@@ -460,10 +426,10 @@ def _finalize_response(
     )
 
 
-@FUNC.handler(method="POST", path="/openrouter-toolkit-chat-completion")
-def openrouter_toolkit_chat_completion(request: Request, _config, logger) -> Response:
+@FUNC.handler(method="POST", path="/azure-ai-toolkit-chat-completion")
+def azure_ai_toolkit_chat_completion(request: Request, _config, logger) -> Response:
     """
-    Process OpenRouter chat completion requests with optional context-aware analysis.
+    Process Azure AI chat completion requests with optional context-aware analysis.
     """
     start_time = time.time()
     params = RequestParams("", "")
@@ -489,7 +455,7 @@ def openrouter_toolkit_chat_completion(request: Request, _config, logger) -> Res
 
         # Process response
         logger.info(f"[{params.request_id}] Processing API response")
-        response_data, extraction_error = extract_openrouter_response(result, params, logger)
+        response_data, extraction_error = extract_azure_ai_response(result, params, logger)
         if extraction_error:
             return extraction_error
 

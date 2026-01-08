@@ -1,0 +1,42 @@
+name: Azure AI Toolkit Query
+description: 'Submit chat completion requests to Azure AI Toolkit. '
+provision_on_install: true
+trigger:
+    next:
+        - azure_ai_toolkit_chat_completion
+    name: On demand
+    parameters:
+        properties:
+            temperature_input:
+                type: string
+                default: "1.0"
+            model_name_input:
+                type: string
+                default: gpt-5
+            user_prompt_input:
+                type: string
+            online_input:
+                type: boolean
+                default: false
+            context_data_input:
+                type: string
+                description: "JSON string containing context data from falcon.data for enhanced analysis"
+        required:
+            - user_prompt_input
+        type: object
+actions:
+    azure_ai_toolkit_chat_completion:
+        id: functions.azure-ai-toolkit-chat-completion.Azure AI Toolkit Chat Completion
+        properties:
+            model_name_input: ${model_name_input}
+            temperature_input: ${temperature_input}
+            online_input: ${online_input}
+            context_data_input: ${context_data_input}
+            user_prompt_input: ${user_prompt_input}
+output_fields:
+    - azure_ai_toolkit_chat_completion.FaaS.azure-ai-toolkit-chat-completion.AzureAIToolkitChatCompletion.model_output_text
+    - azure_ai_toolkit_chat_completion.FaaS.azure-ai-toolkit-chat-completion.AzureAIToolkitChatCompletion.execution_time_ms
+summary: |-
+    ${azure_ai_toolkit_chat_completion.FaaS.azure-ai-toolkit-chat-completion.AzureAIToolkitChatCompletion.execution_time_ms}
+
+    ${azure_ai_toolkit_chat_completion.FaaS.azure-ai-toolkit-chat-completion.AzureAIToolkitChatCompletion.model_output_text}
