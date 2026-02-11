@@ -12,13 +12,13 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
   async navigateToExtension(): Promise<void> {
     return this.withTiming(
       async () => {
-        await this.navigateToNGSIEMIncidents();
+        await this.navigateToNGSIEMCases();
         await this.openFirstCase();
         await this.navigateToWorkbench();
         await this.clickGraphNode();
         await this.page.waitForLoadState('networkidle');
 
-        this.logger.success('Navigated to incident workbench with OpenRouter Toolkit extension');
+        this.logger.success('Navigated to case workbench with OpenRouter Toolkit extension');
       },
       'Navigate to OpenRouter Toolkit Extension'
     );
@@ -29,40 +29,44 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
       async () => {
         await this.page.waitForLoadState('networkidle');
 
-        const firstIncidentButton = this.page.locator('[role="gridcell"] button, [role="row"]:has([role="gridcell"]) a').first();
-        await firstIncidentButton.waitFor({ state: 'visible', timeout: 15000 });
-        await firstIncidentButton.click();
+        // Click the first case row to open the flyout dialog
+        const firstCaseButton = this.page.locator('[role="gridcell"] button, [role="row"]:has([role="gridcell"]) a').first();
+        await firstCaseButton.waitFor({ state: 'visible', timeout: 15000 });
+        await firstCaseButton.click();
+
+        // Wait for the flyout dialog to appear
+        const dialog = this.page.locator('[role="dialog"]');
+        await dialog.waitFor({ state: 'visible', timeout: 15000 });
+        this.logger.debug('Case flyout dialog opened');
+
+        // Click "See full case" link to navigate to the case Workbench
+        const seeFullCaseLink = dialog.getByRole('link', { name: /See full case/i });
+        await seeFullCaseLink.waitFor({ state: 'visible', timeout: 10000 });
+        await seeFullCaseLink.click();
 
         await this.page.waitForLoadState('networkidle');
 
-        this.logger.success('Opened first incident');
+        this.logger.success('Opened first case and navigated to full case view');
       },
-      'Open first incident'
+      'Open first case'
     );
   }
 
   async navigateToWorkbench(): Promise<void> {
     return this.withTiming(
       async () => {
-        this.logger.info('Navigating to Workbench view via Actions menu');
+        this.logger.info('Verifying Workbench view is loaded');
 
-        const actionsButton = this.page.getByRole('button', { name: /Actions/i });
-        await actionsButton.waitFor({ state: 'visible', timeout: 10000 });
-        await actionsButton.click();
-        this.logger.debug('Clicked Actions button');
-
-        const workbenchViewOption = this.page.getByRole('menuitem', { name: /Workbench View/i }).or(
-          this.page.locator('text="Workbench View"')
-        );
-        await workbenchViewOption.waitFor({ state: 'visible', timeout: 10000 });
-        await workbenchViewOption.click();
-        this.logger.debug('Clicked Workbench View');
+        // "See full case" navigates directly to the Workbench tab
+        // Wait for the graph canvas to be ready
+        const graphCanvas = this.page.locator('.keylines-container, canvas, svg').first();
+        await graphCanvas.waitFor({ state: 'visible', timeout: 30000 });
 
         await this.page.waitForLoadState('networkidle');
 
-        this.logger.success('Navigated to Workbench view');
+        this.logger.success('Workbench view is loaded');
       },
-      'Navigate to Workbench view'
+      'Verify Workbench view loaded'
     );
   }
 

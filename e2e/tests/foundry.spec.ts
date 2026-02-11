@@ -18,20 +18,20 @@ test.describe('OpenRouter Toolkit Extension E2E Tests', () => {
 
   test.describe('Extension Installation and Discovery', () => {
     test('should verify OpenRouter Toolkit extension is installed', async ({ openRouterToolkitPage, appName }) => {
-      // Navigate to Incidents to access the extension socket
-      await openRouterToolkitPage.navigateToNGSIEMIncidents();
+      // Navigate to Cases to access the extension socket
+      await openRouterToolkitPage.navigateToNGSIEMCases();
 
-      // Verify we're on the Incidents page
+      // Verify we're on the Cases page
       const currentUrl = openRouterToolkitPage.page.url();
-      expect(currentUrl).toMatch(/\/xdr\/incidents/);
+      expect(currentUrl).toMatch(/\/xdr\/cases/);
 
-      logger.success(`${appName} extension is accessible from Incidents page`);
+      logger.success(`${appName} extension is accessible from Cases page`);
     });
   });
 
   test.describe('Extension Rendering and UI Verification', () => {
     test('should navigate to extension and verify it renders', async ({ openRouterToolkitPage }) => {
-      // Navigate to an incident that will show the extension
+      // Navigate to a case that will show the extension
       await openRouterToolkitPage.navigateToExtension();
 
       // Verify the extension renders properly
