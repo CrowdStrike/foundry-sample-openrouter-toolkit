@@ -10,7 +10,7 @@ import { FoundryHomePage } from './FoundryHomePage';
  * Supports testing Foundry extensions that appear in detection sockets:
  * - activity.detections.details (Endpoint Detections)
  * - xdr.detections.panel (XDR Detections)
- * - ngsiem.workbench.details (NGSIEM Incidents)
+ * - ngsiem.workbench.details (NGSIEM Cases)
  */
 export class SocketNavigationPage extends BasePage {
   protected foundryHome: FoundryHomePage;
@@ -113,14 +113,14 @@ export class SocketNavigationPage extends BasePage {
   }
 
   /**
-   * Navigate to Incidents page via Next-Gen SIEM menu (ngsiem.workbench.details socket)
-   * Uses menu navigation: Menu → Next-Gen SIEM → Incidents
+   * Navigate to Cases page via Next-Gen SIEM menu (ngsiem.workbench.details socket)
+   * Uses menu navigation: Menu → Next-Gen SIEM → Cases
    * Note: Requires NGSIEM SKU - may not be available in all environments
    */
-  async navigateToNGSIEMIncidents(): Promise<void> {
+  async navigateToNGSIEMCases(): Promise<void> {
     return this.withTiming(
       async () => {
-        this.logger.info('Navigating to Incidents via Next-Gen SIEM menu');
+        this.logger.info('Navigating to Cases via Next-Gen SIEM menu');
 
         // Navigate to Foundry home page first
         await this.foundryHome.goto();
@@ -138,22 +138,22 @@ export class SocketNavigationPage extends BasePage {
         await nextGenSiemButton.click();
         this.logger.debug('Clicked Next-Gen SIEM menu');
 
-        // Click "Incidents" - use section-link selector to avoid the learn card
-        const incidentsLink = this.page.getByTestId('section-link').filter({ hasText: /Incidents/i });
-        await incidentsLink.waitFor({ state: 'visible', timeout: 10000 });
-        await incidentsLink.click();
-        this.logger.debug('Clicked Incidents');
+        // Click "Cases" - use section-link selector to avoid the learn card
+        const casesLink = this.page.getByTestId('section-link').filter({ hasText: /Cases/i });
+        await casesLink.waitFor({ state: 'visible', timeout: 10000 });
+        await casesLink.click();
+        this.logger.debug('Clicked Cases');
 
         // Wait for page to load
         await this.page.waitForLoadState('networkidle');
 
-        // Verify we're on the incidents page - look for incidents table or grid
-        const incidentsContent = this.page.locator('[role="grid"], [role="table"], h1').first();
-        await expect(incidentsContent).toBeVisible({ timeout: 15000 });
+        // Verify we're on the cases page - look for cases table or grid
+        const casesContent = this.page.locator('[role="grid"], [role="table"], h1').first();
+        await expect(casesContent).toBeVisible({ timeout: 15000 });
 
-        this.logger.success('Navigated to Incidents page via menu');
+        this.logger.success('Navigated to Cases page via menu');
       },
-      'Navigate to Incidents via menu'
+      'Navigate to Cases via menu'
     );
   }
 

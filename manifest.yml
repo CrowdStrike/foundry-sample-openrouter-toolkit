@@ -1,3 +1,4 @@
+app_id: 62646f64ee82447b8eafced4554d29e8
 name: OpenRouter Toolkit
 description: Provides seamless integration with OpenRouter's unified API to access multiple AI model providers (OpenAI, Anthropic, Meta, Google) for advanced threat analysis and security research
 logo: images/openrouter-logo.png
@@ -17,7 +18,8 @@ ignored:
 ui:
   homepage: ''
   extensions:
-  - name: OpenRouter Toolkit
+  - id: 48a14fbe18ae403ab5e02073c9675297
+    name: OpenRouter Toolkit
     description: OpenRouter Toolkit UI
     path: ui/extensions/openrouter-toolkit-ui/dist
     entrypoint: ui/extensions/openrouter-toolkit-ui/dist/index.html
@@ -60,7 +62,8 @@ ui:
   dashboards: {}
   navigation: {}
 api_integrations:
-- name: OpenRouter API
+- id: 66d34379566c4889bab16858c8803d2c
+  name: OpenRouter API
   description: Integration with OpenRouter
   path: api-integrations/OpenRouter_API.json
 rtr_scripts: []
@@ -76,7 +79,8 @@ auth:
   permissions: {}
   roles: []
 functions:
-- name: openrouter-toolkit-chat-completion
+- id: 59db4209024e424fa201d5e4e7ad2cf7
+  name: openrouter-toolkit-chat-completion
   config: null
   description: Submit requests to OpenRouter
   path: functions/openrouter-toolkit-chat-completion
@@ -90,6 +94,7 @@ functions:
     request_schema: schemas/request_schema.json
     response_schema: schemas/response_schema.json
     workflow_integration:
+      id: f107eb8587b043aca4a0acecb934c5ea
       disruptive: false
       system_action: false
       tags:
@@ -98,7 +103,8 @@ functions:
   language: python
   max_exec_duration_seconds: 60
 workflows:
-- name: OpenRouter Toolkit Query
+- id: 882153f029884348a0fc9ae79bf3ff3f
+  name: OpenRouter Toolkit Query
   path: workflows/OpenRouter_Toolkit_Query.yml
   permissions: []
 parsers: []
@@ -106,5 +112,6 @@ logscale:
   saved_searches: []
 lookup_files: []
 docs:
+  id: 1bd7b82c883c462a816178a685ed6abe
   path: app_docs
   entrypoint: README.md
