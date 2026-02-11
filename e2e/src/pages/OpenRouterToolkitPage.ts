@@ -166,18 +166,30 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
         await this.page.waitForLoadState('networkidle');
 
         // Scroll to bottom of details panel where extensions appear
-        await this.page.keyboard.press('End');
-        await this.page.keyboard.press('End');
-        await this.page.waitForTimeout(1000);
-
         const extensionHeading = this.page.locator('button', {
           hasText: /OpenRouter Toolkit/i
         }).first();
 
-        await extensionHeading.waitFor({ state: 'visible', timeout: 15000 });
+        // Try scrolling multiple times to find the extension
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          await this.page.keyboard.press('End');
+          await this.page.keyboard.press('End');
+          await this.page.waitForTimeout(1500);
+
+          const isVisible = await extensionHeading.isVisible().catch(() => false);
+          if (isVisible) break;
+
+          if (attempt < 3) {
+            this.logger.debug(`Extension not visible after scroll attempt ${attempt}, retrying...`);
+            await this.page.keyboard.press('Home');
+            await this.page.waitForTimeout(500);
+          }
+        }
+
+        await extensionHeading.waitFor({ state: 'visible', timeout: 30000 });
         this.logger.info('Found OpenRouter Toolkit extension heading');
 
-        await extensionHeading.scrollIntoViewIfNeeded({ timeout: 5000 });
+        await extensionHeading.scrollIntoViewIfNeeded({ timeout: 10000 });
 
         // Expand extension if collapsed
         const isExpanded = await extensionHeading.getAttribute('aria-expanded');
