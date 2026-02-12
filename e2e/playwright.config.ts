@@ -1,15 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 import { AuthFile } from './constants/AuthFile';
 import dotenv from 'dotenv';
-import os from 'os';
 
 if (!process.env.CI) {
   dotenv.config({ path: ".env", quiet: true });
 }
-
-const cpuCount = os.cpus().length;
-const defaultWorkers = Math.max(1, Math.floor(cpuCount / 2));
-console.log(`Playwright workers: ${defaultWorkers} (${cpuCount} CPUs detected)`);
 
 export default defineConfig({
   testDir: './tests',
