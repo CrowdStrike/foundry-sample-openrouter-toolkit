@@ -1,18 +1,22 @@
 import { defineConfig, devices } from '@playwright/test';
 import { AuthFile } from './constants/AuthFile';
 import dotenv from 'dotenv';
+import os from 'os';
 
 if (!process.env.CI) {
   dotenv.config({ path: ".env", quiet: true });
 }
+
+const cpuCount = os.cpus().length;
+const defaultWorkers = Math.max(1, Math.floor(cpuCount / 2));
+console.log(`Playwright workers: ${defaultWorkers} (${cpuCount} CPUs detected)`);
 
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 4,
-  timeout: process.env.CI ? 60 * 1000 : 45 * 1000, 
+  timeout: process.env.CI ? 60 * 1000 : 45 * 1000,
   expect: {
     timeout: process.env.CI ? 10 * 1000 : 8 * 1000,
   },
