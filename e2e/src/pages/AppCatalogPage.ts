@@ -148,8 +148,7 @@ export class AppCatalogPage extends BasePage {
       count = await textInputs.count();
       this.logger.info(`Configuration form detected with ${count} input field(s)`);
     } catch (error) {
-      this.logger.info('No configuration required - no input fields found');
-      return;
+      throw new Error('This app should prompt for API credentials');
     }
 
     // Check if all text fields have values - if so, accept defaults
