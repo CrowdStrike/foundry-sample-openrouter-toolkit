@@ -201,7 +201,7 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
         }
 
         // Verify iframe and form elements
-        await expect(this.page.locator('iframe')).toBeVisible({ timeout: 15000 });
+        await expect(this.page.locator('iframe').first()).toBeVisible({ timeout: 15000 });
         this.logger.info('Extension iframe loaded');
 
         const iframe: FrameLocator = this.page.frameLocator('iframe');

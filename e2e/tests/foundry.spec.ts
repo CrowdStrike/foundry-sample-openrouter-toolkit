@@ -17,12 +17,12 @@ test.describe('OpenRouter Toolkit Extension E2E Tests', () => {
   });
 
   test.describe('Extension Installation and Discovery', () => {
-    test('should verify OpenRouter Toolkit extension is installed', async ({ openRouterToolkitPage, appName }) => {
+    test('should verify OpenRouter Toolkit extension is installed', async ({ openRouterToolkitPage, appName, page }) => {
       // Navigate to Cases to access the extension socket
       await openRouterToolkitPage.navigateToNGSIEMCases();
 
       // Verify we're on the Cases page
-      const currentUrl = openRouterToolkitPage.page.url();
+      const currentUrl = page.url();
       expect(currentUrl).toMatch(/\/xdr\/cases/);
 
       logger.success(`${appName} extension is accessible from Cases page`);
@@ -71,7 +71,7 @@ test.describe('OpenRouter Toolkit Extension E2E Tests', () => {
       await openRouterToolkitPage.verifyExtensionRenders();
 
       // Verify iframe is present and visible
-      const iframe = page.locator('iframe');
+      const iframe = page.locator('iframe').first();
       await expect(iframe).toBeVisible({ timeout: 15000 });
 
       // Get the iframe locator for content checks
