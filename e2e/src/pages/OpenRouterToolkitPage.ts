@@ -201,10 +201,10 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
         }
 
         // Verify iframe and form elements
-        await expect(this.page.locator('iframe')).toBeVisible({ timeout: 15000 });
+        await expect(this.page.locator('iframe[name="portal"]')).toBeVisible({ timeout: 15000 });
         this.logger.info('Extension iframe loaded');
 
-        const iframe: FrameLocator = this.page.frameLocator('iframe');
+        const iframe: FrameLocator = this.page.frameLocator('iframe[name="portal"]');
 
         const requestTab = iframe.getByRole('tab', { name: /request/i });
         await expect(requestTab).toBeVisible({ timeout: 10000 });
@@ -229,7 +229,7 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
       async () => {
         this.logger.info('Verifying query form is present');
 
-        const iframe: FrameLocator = this.page.frameLocator('iframe');
+        const iframe: FrameLocator = this.page.frameLocator('iframe[name="portal"]');
 
         const queryInput = iframe.locator('textarea, input[type="text"]').first();
         await expect(queryInput).toBeVisible({ timeout: 10000 });
@@ -253,7 +253,7 @@ export class OpenRouterToolkitPage extends SocketNavigationPage {
       async () => {
         this.logger.info('Testing basic query form interaction');
 
-        const iframe: FrameLocator = this.page.frameLocator('iframe');
+        const iframe: FrameLocator = this.page.frameLocator('iframe[name="portal"]');
 
         const queryInput = iframe.getByRole('textbox', { name: /query/i });
         await queryInput.fill('What is this incident about?');
