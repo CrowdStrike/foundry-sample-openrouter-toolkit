@@ -71,11 +71,11 @@ test.describe('OpenRouter Toolkit Extension E2E Tests', () => {
       await openRouterToolkitPage.verifyExtensionRenders();
 
       // Verify iframe is present and visible
-      const iframe = page.locator('iframe');
+      const iframe = page.locator('iframe[name="portal"]');
       await expect(iframe).toBeVisible({ timeout: 15000 });
 
       // Get the iframe locator for content checks
-      const iframeContent = page.frameLocator('iframe');
+      const iframeContent = page.frameLocator('iframe[name="portal"]');
 
       // Verify main content loaded - look for Request/Response tabs or form elements
       const requestTab = iframeContent.getByRole('tab', { name: /request/i });
