@@ -1,17 +1,13 @@
-import { test as setup } from '../src/fixtures';
+import { test as setup } from '@playwright/test';
+import { AppCatalogPage, config } from '@crowdstrike/foundry-playwright';
 
-setup('install openrouter toolkit app', async ({ appCatalogPage, appName }) => {
-  // Check if app is already installed (this navigates to the app page)
-  const isInstalled = await appCatalogPage.isAppInstalled(appName);
-
-  if (!isInstalled) {
-    console.log(`App '${appName}' is not installed. Installing...`);
-    const installed = await appCatalogPage.installApp(appName);
-
-    if (!installed) {
-      throw new Error(`Failed to install app '${appName}'`);
-    }
-  } else {
-    console.log(`App '${appName}' is already installed`);
-  }
+setup('install app', async ({ page }) => {
+  setup.setTimeout(120000);
+  const catalog = new AppCatalogPage(page);
+  await catalog.installApp(config.appName, {
+    configureSettings: async (page) => {
+      await page.getByLabel('Name').fill('OpenRouter API');
+      await page.getByLabel('API key').fill('sk-dummy-api-key-12345');
+    },
+  });
 });
