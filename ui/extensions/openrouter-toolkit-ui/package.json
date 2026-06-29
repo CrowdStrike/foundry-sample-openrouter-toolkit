@@ -14,7 +14,7 @@
     "react-markdown": "10.1.0"
   },
   "devDependencies": {
-    "@babel/core": "7.28.4",
+    "@babel/core": "7.29.7",
     "@babel/preset-react": "7.27.1",
     "@babel/preset-typescript": "7.27.1",
     "@rollup/plugin-babel": "6.0.4",
@@ -90,7 +90,8 @@
     "node": ">=22"
   },
   "overrides": {
-    "tar": "7.5.11",
+    "tar": "7.5.16",
+    "shell-quote": "1.8.4",
     "svgo@>=2.0.0 <2.8.1": "2.8.1",
     "svgo@>=4.0.0 <4.0.1": "4.0.1",
     "minimatch@3": "3.1.4",
@@ -103,6 +104,7 @@
     "brace-expansion@2": "2.0.3",
     "ws@8": "8.21.0",
     "yaml@1": "1.10.3",
-    "uuid": "13.0.1"
+    "uuid": "13.0.1",
+    "js-yaml": "4.2.0"
   }
 }
