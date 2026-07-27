@@ -8,9 +8,6 @@
     }
   },
   "info": {
-    "contact": {
-      "email": "nathan.labadie@crowdstrike.com"
-    },
     "description": "Integration with the OpenRouter API.",
     "title": "OpenRouter API",
     "version": ""
