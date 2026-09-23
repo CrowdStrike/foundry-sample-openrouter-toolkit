@@ -36,6 +36,6 @@ The script will show real-time progress as models complete, with up to 8 running
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.14+
 - `requests` library (`pip install requests`)
 - OpenRouter API key
