@@ -7,7 +7,6 @@ e2e/src/authenticate.cjs
 
 # Additional false positives (build output, lock files, sample data)
 e2e/.env.sample
-ui/extensions/openrouter-toolkit-ui/src/components/Home.tsx
 ui/extensions/openrouter-toolkit-ui/dist/vendor-react-mczbkjav2fy.js
 ui/extensions/openrouter-toolkit-ui/dist/vendor-react-mczbkjav2fy.js.br
 ui/extensions/openrouter-toolkit-ui/dist/vendor-react-mczbkjav2fy.js.gz
