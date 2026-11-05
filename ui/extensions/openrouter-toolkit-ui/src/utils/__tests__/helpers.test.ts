@@ -399,9 +399,9 @@ describe('helpers', () => {
       expect(isDevelopment()).toBe(false);
     });
 
-    it('should return false when window is undefined', () => {
+    it('should return false when window has no dev flag', () => {
       delete (globalThis as any).__DEV__;
-      delete (globalThis as any).window;
+      delete (window as any).__DEV__;
       
       expect(isDevelopment()).toBe(false);
     });

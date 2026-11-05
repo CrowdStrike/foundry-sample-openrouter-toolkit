@@ -10,10 +10,8 @@ const ThrowError = ({ shouldThrow = false }: { shouldThrow?: boolean }) => {
   return <div data-testid="no-error">No error</div>;
 };
 
-// Mock window.location.reload
+// jsdom's window.location can't be replaced, so the reload test below stays skipped
 const mockReload = jest.fn();
-delete (window as any).location;
-(window as any).location = { reload: mockReload };
 
 // Mock console.error to avoid noise in tests
 const originalConsoleError = console.error;
